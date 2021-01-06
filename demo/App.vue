@@ -1,31 +1,61 @@
 <template>
   <div class="app">
     <div class="demo">
-      <h1 class="demo-title">Vue Guided Tour</h1>
+      <h1 class="demo-title">
+        Vue Guided Tour
+      </h1>
       <p>a vue.js 3 component to guide your visitors</p>
-      <a href="#" class="demo-btn" @click.prevent="start">Start the tour</a>
+      <a 
+        href="#"
+        class="demo-btn"
+        @click.prevent="start"
+      >
+        Start the tour
+      </a>
     </div>
     <div class="demo-grid">
-      <div v-for="(step, index) in steps" :key="index" :data-vgt="`step-${index+1}`" :class="`step step-${index+1}`"></div>
+      <div
+        v-for="(step, index) in steps"
+        :key="index"
+        :data-vgt="`step-${index+1}`"
+        :class="`step step-${index+1}`"
+      />
     </div>
   </div>
   <vue-guided-tour
     ref="vgt"
-    :steps="steps"
     v-model:stepIndex="currentStepIndex"
+    :steps="steps"
     @afterStart="onAfterStart"
     @afterFinish="onAfterFinish"
     @afterMove="onAfterMove"
     @afterClose="onAfterClose"
   >
     <!--
-    <template v-slot:close="{ onClose }">
-      <button @click="onClose">x</button>
+    <template #close="{ onClose }">
+      <button @click="onClose">
+        x
+      </button>
     </template>
-    <template v-slot:nav="{ isFirstStep, isLastStep, onPrev, onNext, onFinish }">
-      <button v-if="!isFirstStep" @click="onPrev">Prev</button>
-      <button v-if="isLastStep" @click="onFinish">Finish</button>
-      <button v-else @click="onNext">Next</button>
+    <template #nav="{ isFirstStep, isLastStep, onPrev, onNext, onFinish }">
+      <button
+        v-if="!isFirstStep"
+        @click="onPrev"
+      >
+        Prev
+      </button>
+      <button
+        v-if="isLastStep"
+        @click="onFinish"
+      >
+        Finish
+      </button>
+      <button
+        v-else
+        @click="onNext"
+      >
+        Next
+      </button>
     </template>
     -->
   </vue-guided-tour>

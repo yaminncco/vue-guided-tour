@@ -1,5 +1,9 @@
 <template>
-  <div class="vue-guided-tour" ref="vgtRef" :class="active && 'vgt--active'">
+  <div
+    ref="vgtRef"
+    class="vue-guided-tour"
+    :class="active && 'vgt--active'"
+  >
     <div
       :class="overlayClass"
       :style="overlayStyle"
@@ -11,34 +15,70 @@
         :class="overlayRectClass(key)"
         :style="overlayRectStyle(key)"
         @click="onOverlayClick(key)"
-      ></div>
+      />
     </div>
     <vgt-popover
       v-if="active && showPopover && currentStep.popover"
-      :overlayRect="overlayRect"
+      :overlay-rect="overlayRect"
       :arrow="arrow"
       :offset="offset"
       :position="position"
       :placement="placement"
-      :autoAdjust="autoAdjust"
-      v-bind={...currentStep.popover}
+      :auto-adjust="autoAdjust"
+      v-bind="{...currentStep.popover}"
     >
-      <slot name="close" v-bind="{ onClose: onCloseClick }">
-        <button class="vgt__close vgt__btn--secondary" @click="onCloseClick">×</button>
+      <slot
+        name="close"
+        v-bind="{ onClose: onCloseClick }"
+      >
+        <button
+          class="vgt__close vgt__btn--secondary"
+          @click="onCloseClick"
+        >
+          ×
+        </button>
       </slot>
       <div class="vgt__content">
-        <h3 class="vgt__title">{{ currentStep.popover.title }}</h3>
-        <div v-html="currentStep.popover.content"></div>
+        <h3 class="vgt__title">
+          {{ currentStep.popover.title }}
+        </h3>
+        <div>
+          {{ currentStep.popover.content }}
+        </div>
       </div>
       <div class="vgt__footer">
-        <div class="vgt__pages" v-if="pagination">
+        <div
+          v-if="pagination"
+          class="vgt__pages" 
+        >
           {{ currentStepIndex+1 }} / {{ steps.length }}
         </div>
-        <slot name="nav" v-bind="{ isFirstStep, isLastStep, onPrev, onNext, onFinish }">
+        <slot
+          name="nav"
+          v-bind="{ isFirstStep, isLastStep, onPrev, onNext, onFinish }"
+        >
           <div class="vgt__nav">
-            <button v-if="!isFirstStep" class="vgt__btn vgt__btn--secondary vgt__btn--prev" @click="onPrev">Prev</button>
-            <button v-if="isLastStep" class="vgt__btn vgt__btn--primary" @click="onFinish">Finish</button>
-            <button v-else class="vgt__btn vgt__btn--primary vgt__btn--next" @click="onNext">Next</button>
+            <button
+              v-if="!isFirstStep"
+              class="vgt__btn vgt__btn--secondary vgt__btn--prev"
+              @click="onPrev"
+            >
+              Prev
+            </button>
+            <button
+              v-if="isLastStep"
+              class="vgt__btn vgt__btn--primary"
+              @click="onFinish"
+            >
+              Finish
+            </button>
+            <button
+              v-else
+              class="vgt__btn vgt__btn--primary vgt__btn--next"
+              @click="onNext"
+            >
+              Next
+            </button>
           </div>
         </slot>
       </div>
@@ -48,7 +88,7 @@
 
 <script>
 import VueGuidedTourPopover from './vueGuidedTourPopover.vue'
-import { ref, computed, watch, onMounted, onUnmounted, onBeforeUpdate } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onBeforeUpdate } from 'vue'
 import useOverlayRect from '../useOverlayRect'
 import { isInView } from '../utils'
 
@@ -113,6 +153,7 @@ export default {
       default: true
     }
   },
+  emits: ['update:stepIndex', 'afterStart', 'afterFinish', 'afterMove', 'afterClose'],
   setup(props, { emit }) {
     const vgtRef = ref(null)
     const showPopover = ref(false)

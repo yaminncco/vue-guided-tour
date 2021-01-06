@@ -4,14 +4,14 @@
     class="vgt__popover"
     :style="popoverStyle"
   >
-    <div 
+    <div
       v-if="arrow"
       :class="`vgt__arrow vgt__arrow--${currentPosition}`"
       :style="arrowStyle"
-    ></div>
-    <slot name="close"></slot>
-    <slot></slot>
-    <slot name="nav"></slot>
+    />
+    <slot name="close" />
+    <slot />
+    <slot name="nav" />
   </div>
 </template>
 
@@ -20,8 +20,8 @@ import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { getBoundingClientRect, isPositionVertical, isOutView } from '../utils'
 
 export default {
+  name: 'VueGuidedTourPopover',
   inheritAttrs: false,
-  name: 'vueGuidedTourPopover',
   props: {
     overlayRect: {
       type: Object,
@@ -56,10 +56,8 @@ export default {
   },
   setup(props) {
     const popoverRef = ref(null)
-    
     const currentPosition = ref(null)
-    currentPosition.value = props.position
-    
+
     const x = ref(0)
     const y = ref(0)
 
@@ -101,10 +99,6 @@ export default {
     }
 
     const initPositionCoord = () => {
-      const { width, height, y: top, x: left } = highlightRect.value
-      const right = width + left
-      const bottom = height + top
-
       const { height: popoverHeight, width: popoverWidth } = popoverRef.value.getBoundingClientRect()
 
       const offset = props.offset
@@ -267,7 +261,6 @@ function useArrow (props, popoverX, popoverY, popoverRef, position, highlightRec
     if (!props.arrow) return
     const { height: popoverHeight, width: popoverWidth } = getBoundingClientRect(popoverRef.value)
 
-    const offset = props.offset
     const placement = props.placement
     const arrowSize = arrowRect.value.size
     const arrowOffset = arrowRect.value.offset
