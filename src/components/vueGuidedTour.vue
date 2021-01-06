@@ -378,12 +378,11 @@ export default {
 function useHightlight () {
   const highlightClass = 'vgt__target--highlighted'
   const relativeClass = 'vgt__target--relative'
-  const targetDataSet = 'data-vgt'
 
   const getHighlightEl = (index, steps) => {
     if (typeof index !== 'number' || index < 0 || index > steps.length-1) return
     const targetValue = steps[index].target
-    const el = document.querySelectorAll(`[${targetDataSet}='${targetValue}']`)[0]
+    const el = document.querySelector(`${targetValue}`)
     if (!el) {
       console.warn(`Target to highlight "${targetValue}" not found`)
       return undefined
@@ -401,7 +400,7 @@ function useHightlight () {
   }
 
   const removeHighlight = () => {
-    const allTargets = document.querySelectorAll(`[${targetDataSet}]`)
+    const allTargets = document.querySelectorAll(`.${highlightClass}`)
     allTargets.forEach(target => {
       target.classList.remove(highlightClass)
       target.classList.remove(relativeClass)

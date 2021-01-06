@@ -17,7 +17,6 @@
       <div
         v-for="(step, index) in steps"
         :key="index"
-        :data-vgt="`step-${index+1}`"
         :class="`step step-${index+1}`"
       />
     </div>
@@ -69,7 +68,7 @@ export default {
       currentStepIndex: -1,
       steps: [
         {
-          target: 'step-1',
+          target: '.step-1',
           // padding: 0,
           popover: {
             title: 'Hello world',
@@ -82,7 +81,7 @@ export default {
           }
         },
         {
-          target: 'step-2',
+          target: '.step-2',
           popover: {
             title: 'Hello world 2',
             content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
@@ -91,7 +90,7 @@ export default {
           }
         },
         {
-          target: 'step-3',
+          target: '.step-3',
           popover: {
             title: '',
             content: 'Hello world 3',
@@ -100,7 +99,7 @@ export default {
           }
         },
         {
-          target: 'step-4',
+          target: '.step-4',
           popover: {
             content: "Hello world 4",
             placement: 'center',
@@ -108,7 +107,7 @@ export default {
           }
         },
         {
-          target: 'step-5',
+          target: '.step-5',
           popover: {
             content: 'Hello world 5',
             placement: 'start',
@@ -116,7 +115,7 @@ export default {
           }
         },
         {
-          target: 'step-6',
+          target: '.step-6',
           popover: {
             content: 'Hello world 6',
             placement: 'center',
@@ -124,7 +123,7 @@ export default {
           }
         },
         {
-          target: 'step-7',
+          target: '.step-7',
           popover: {
             content: 'Hello world 7',
             placement: 'center',
