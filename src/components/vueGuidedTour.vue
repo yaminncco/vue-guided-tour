@@ -383,12 +383,14 @@ function useHightlight () {
     if (typeof index !== 'number' || index < 0 || index > steps.length-1) return
     const targetValue = steps[index].target
     const el = document.querySelector(`${targetValue}`)
-    if (!el) {
-      console.warn(`Target to highlight "${targetValue}" not found`)
+    if (!targetValue) {
+      console.warn(`[vue-guided-tour] : Target is required in step ${index}`)
       return undefined
-    } else {
-      return el
+    } else if (!el) {
+      console.warn(`[vue-guided-tour] : Target to highlight "${targetValue}" not found`)
+      return undefined
     }
+    return el
   }
 
   const addHighlight = (el) => {
