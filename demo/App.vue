@@ -30,6 +30,11 @@
     @afterMove="onAfterMove"
   >
     <!--
+    <template #content="{ stepIndex }">
+      <div>
+        step {{ stepIndex }}
+      </div>
+    </template>
     <template #close="{ onEnd }">
       <button @click="onEnd">
         x

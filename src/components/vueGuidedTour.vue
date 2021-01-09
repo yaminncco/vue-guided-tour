@@ -38,14 +38,25 @@
           ×
         </button>
       </slot>
-      <div class="vgt__content">
-        <h3 class="vgt__title">
-          {{ currentStep.popover.title }}
-        </h3>
-        <div>
-          {{ currentStep.popover.content }}
+      <slot
+        name="content" 
+        v-bind="{ stepIndex: currentStepIndex }"
+      >
+        <div
+          v-if="currentStep.popover.title || currentStep.popover.content"
+          class="vgt__content"
+        >
+          <h3
+            v-if="currentStep.popover.title"
+            class="vgt__title"
+          >
+            {{ currentStep.popover.title }}
+          </h3>
+          <div v-if="currentStep.popover.content">
+            {{ currentStep.popover.content }}
+          </div>
         </div>
-      </div>
+      </slot>
       <div class="vgt__footer">
         <div
           v-if="pagination"
