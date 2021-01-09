@@ -29,7 +29,7 @@
     >
       <slot
         name="close"
-        v-bind="{ onClose: onCloseClick }"
+        v-bind="{ onEnd: onCloseClick }"
       >
         <button
           class="vgt__close vgt__btn--secondary"
@@ -55,7 +55,7 @@
         </div>
         <slot
           name="nav"
-          v-bind="{ isFirstStep, isLastStep, onPrev, onNext, onFinish }"
+          v-bind="{ isFirstStep, isLastStep, onPrev, onNext, onEnd }"
         >
           <div class="vgt__nav">
             <button
@@ -68,9 +68,9 @@
             <button
               v-if="isLastStep"
               class="vgt__btn vgt__btn--primary"
-              @click="onFinish"
+              @click="onEnd"
             >
-              Finish
+              End
             </button>
             <button
               v-else
@@ -153,7 +153,7 @@ export default {
       default: true
     }
   },
-  emits: ['update:stepIndex', 'afterStart', 'afterFinish', 'afterMove', 'afterClose'],
+  emits: ['update:stepIndex', 'afterStart', 'afterEnd', 'afterMove'],
   setup(props, { emit }) {
     const vgtRef = ref(null)
     const showPopover = ref(false)
@@ -237,10 +237,10 @@ export default {
       }
     }
   
-    const onFinish = () => {
+    const onEnd = () => {
       if (!active.value || moving.value) return
       const index = -1
-      handleStepIndexChange(index, undefined, 'finish')
+      handleStepIndexChange(index)
     }
 
     const onMove = (index = 0) => {
@@ -251,12 +251,6 @@ export default {
       }
     }
 
-    const onClose = () => {
-      if (!active.value || moving.value) return
-      const index = -1
-      handleStepIndexChange(index)
-    }
-
     const handleStepIndexChange = (index, el, event) => {     
       showPopover.value = false
       removeHighlight()
@@ -265,7 +259,7 @@ export default {
       
       if (index === -1) {
         overlayFadeOut(() => {
-          emit(event === 'finish' ? 'afterFinish' : 'afterClose')
+          emit('afterEnd')
         })
         return
       }
@@ -307,7 +301,7 @@ export default {
       switch (event.key) {
       case ('Escape'):
         if (props.allowEscClose) {
-          onClose()
+          onEnd()
         }
         break
       case ('ArrowLeft'):
@@ -327,11 +321,11 @@ export default {
 
     const onOverlayClick = (key) => {
       if (!props.allowOverlayClose || !active.value || key === 'center') return
-      onClose()
+      onEnd()
     }
 
     const onCloseClick = () => {
-      onClose()
+      onEnd()
     }
 
     const onResize = () => {
@@ -366,7 +360,7 @@ export default {
       onStart,
       onNext,
       onPrev,
-      onFinish,
+      onEnd,
       onMove,
       onKeyUp,
       onOverlayClick,

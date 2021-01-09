@@ -26,17 +26,16 @@
     v-model:stepIndex="currentStepIndex"
     :steps="steps"
     @afterStart="onAfterStart"
-    @afterFinish="onAfterFinish"
+    @afterEnd="onAfterEnd"
     @afterMove="onAfterMove"
-    @afterClose="onAfterClose"
   >
     <!--
-    <template #close="{ onClose }">
-      <button @click="onClose">
+    <template #close="{ onEnd }">
+      <button @click="onEnd">
         x
       </button>
     </template>
-    <template #nav="{ isFirstStep, isLastStep, onPrev, onNext, onFinish }">
+    <template #nav="{ isFirstStep, isLastStep, onPrev, onNext, onEnd }">
       <button
         v-if="!isFirstStep"
         @click="onPrev"
@@ -45,9 +44,9 @@
       </button>
       <button
         v-if="isLastStep"
-        @click="onFinish"
+        @click="onEnd"
       >
-        Finish
+        End
       </button>
       <button
         v-else
@@ -141,17 +140,13 @@ export default {
       // call after the tour start
       // console.log('onAfterStart')
     },
-    onAfterFinish() {
-      // call after the tour finish
-      // console.log('onAfterFinish')
+    onAfterEnd() {
+      // call after the tour end
+      // console.log('onAfterEnd')
     },
     onAfterMove() {
       // call after the tour move to the next or prev step
       // console.log('onAfterMove')
-    },
-    onAfterClose() {
-      // call after the tour close
-      // console.log('onAfterClose')
     }
   }
 }
