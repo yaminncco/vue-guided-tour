@@ -100,7 +100,7 @@ export default {
   props: {
     steps: {
       type: Array,
-      default: () => []
+      required: true
     },
     stepIndex: {
       type: Number,
