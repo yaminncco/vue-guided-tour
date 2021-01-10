@@ -223,10 +223,10 @@ export default {
     })
     
     const onStart = (index = 0) => {
-      if (index === currentStepIndex.value || active.value || moving.value) return
+      if (active.value) return
       const el = getHighlightEl(index, props.steps)
       if (el) {
-        handleStepIndexChange(index, el, 'start')
+        handleStepIndexChange(index, el)
       }
     }
 
@@ -262,7 +262,7 @@ export default {
       }
     }
 
-    const handleStepIndexChange = (index, el, event) => {     
+    const handleStepIndexChange = (index, el) => {     
       showPopover.value = false
       removeHighlight()
       
@@ -287,9 +287,9 @@ export default {
         const done = () => {
           addHighlight(el)
           showPopover.value = true
-          emit(event === 'start' ? 'afterStart' : 'afterMove')
+          emit(!prevEl.value ? 'afterStart' : 'afterMove')
         }
-        event === 'start' ? overlayFadeIn(done) : overlayMove(done)
+        !prevEl.value ? overlayFadeIn(done) : overlayMove(done)
       })
     }
 
