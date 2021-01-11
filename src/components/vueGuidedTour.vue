@@ -382,7 +382,6 @@ export default {
 
 function useHightlight () {
   const highlightClass = 'vgt__target--highlighted'
-  const relativeClass = 'vgt__target--relative'
 
   const getHighlightEl = (index, steps) => {
     if (typeof index !== 'number' || index < 0 || index > steps.length-1) return
@@ -400,17 +399,12 @@ function useHightlight () {
 
   const addHighlight = (el) => {
     el.classList.add(highlightClass)
-    const position = window.getComputedStyle(el).position
-    if (position === 'static') {
-      el.classList.add(relativeClass)
-    }
   }
 
   const removeHighlight = () => {
     const allTargets = document.querySelectorAll(`.${highlightClass}`)
     allTargets.forEach(target => {
       target.classList.remove(highlightClass)
-      target.classList.remove(relativeClass)
     })
   }
 
@@ -427,7 +421,7 @@ function useHightlight () {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 99990 !important;
+  z-index: 99999 !important;
 }
 /*
 .vgt--active {}
@@ -448,12 +442,10 @@ function useHightlight () {
   background-color: transparent !important;
 }
 
+/*
 .vgt__target--highlighted {
-  z-index: 99995 !important;
 }
-.vgt__target--relative {
-  position: relative !important;
-}
+*/
 
 .vgt__title {
   font-size: 24px;
