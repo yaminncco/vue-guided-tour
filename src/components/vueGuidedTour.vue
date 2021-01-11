@@ -330,8 +330,8 @@ export default {
       event.preventDefault()
     }
 
-    const onOverlayClick = (key) => {
-      if (!props.allowOverlayClose || !active.value || key === 'center') return
+    const onOverlayClick = () => {
+      if (!props.allowOverlayClose) return
       onEnd()
     }
 
@@ -439,6 +439,7 @@ function useHightlight () {
   visibility: visible;
 }
 .vgt__overlay--center {
+  pointer-events: none !important;
   background-color: transparent !important;
 }
 
