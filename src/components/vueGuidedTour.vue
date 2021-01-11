@@ -28,6 +28,7 @@
       v-bind="{...currentStep.popover}"
     >
       <slot
+        v-if="closeBtn"
         name="close"
         v-bind="{ onEnd: onCloseClick }"
       >
@@ -148,6 +149,10 @@ export default {
       default: true
     },
     pagination: {
+      type: Boolean,
+      default: true
+    },
+    closeBtn: {
       type: Boolean,
       default: true
     },
