@@ -30,7 +30,6 @@
       <slot
         v-if="closeBtn"
         name="close"
-        v-bind="{ onEnd: onCloseClick }"
       >
         <button
           class="vgt__close vgt__btn--secondary"
@@ -67,7 +66,7 @@
         </div>
         <slot
           name="nav"
-          v-bind="{ isFirstStep, isLastStep, onPrev, onNext, onEnd }"
+          v-bind="{ isFirstStep, isLastStep }"
         >
           <div class="vgt__nav">
             <button
@@ -100,7 +99,7 @@
 
 <script>
 import VueGuidedTourPopover from './vueGuidedTourPopover.vue'
-import { ref, computed, onMounted, onUnmounted, onBeforeUpdate } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onBeforeUpdate, inject } from 'vue'
 import useOverlayRect from '../useOverlayRect'
 import { isInView } from '../utils'
 
@@ -180,6 +179,8 @@ export default {
     let timeout = null
     let preventScroll = false
     
+    const $vgt = inject('$vgt')
+    
     const currentStep = computed(() => {
       return props.steps[currentStepIndex.value]
     })
@@ -215,6 +216,11 @@ export default {
       overlayRefs.value = []
     })
     onMounted(() => {
+      $vgt.start = onStart
+      $vgt.next = onNext
+      $vgt.prev = onPrev
+      $vgt.end = onEnd
+      $vgt.move = onMove
       window.addEventListener('keydown', onKeyDown)
       window.addEventListener('keyup', onKeyUp)
       window.addEventListener('resize', onResize)

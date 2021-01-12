@@ -22,7 +22,6 @@
     </div>
   </div>
   <vue-guided-tour
-    ref="vgt"
     v-model:stepIndex="currentStepIndex"
     :steps="steps"
     @afterStart="onAfterStart"
@@ -35,27 +34,27 @@
         step {{ stepIndex }}
       </div>
     </template>
-    <template #close="{ onEnd }">
-      <button @click="onEnd">
+    <template #close>
+      <button @click="$vgt.end">
         x
       </button>
     </template>
-    <template #nav="{ isFirstStep, isLastStep, onPrev, onNext, onEnd }">
+    <template #nav="{ isFirstStep, isLastStep }">
       <button
         v-if="!isFirstStep"
-        @click="onPrev"
+        @click="$vgt.prev"
       >
         Prev
       </button>
       <button
         v-if="isLastStep"
-        @click="onEnd"
+        @click="$vgt.end"
       >
         End
       </button>
       <button
         v-else
-        @click="onNext"
+        @click="$vgt.next"
       >
         Next
       </button>
@@ -139,7 +138,7 @@ export default {
   },
   methods: {
     start() {
-      this.$refs.vgt.onStart(0)
+      this.$vgt.start(0)
     },
     onAfterStart() {
       // call after the tour start
