@@ -72,10 +72,10 @@ export default {
       steps: [
         {
           target: '.step-1',
+          title: 'Hello world',
+          content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
           // padding: 0,
           popover: {
-            title: 'Hello world',
-            content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
             placement: 'start', // start, end, center
             position: 'right', // top, left, right, bottom
             // offset: 0,
@@ -85,50 +85,49 @@ export default {
         },
         {
           target: '.step-2',
+          title: 'Hello world 2',
+          content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
           popover: {
-            title: 'Hello world 2',
-            content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
             placement: 'end',
             position: 'right',
           }
         },
         {
           target: '.step-3',
+          content: 'Hello world 3',
           popover: {
-            title: '',
-            content: 'Hello world 3',
             placement: 'center',
             position: 'left',
           }
         },
         {
           target: '.step-4',
+          content: "Hello world 4",
           popover: {
-            content: "Hello world 4",
             placement: 'center',
             position: 'top',
           }
         },
         {
           target: '.step-5',
+          content: 'Hello world 5',
           popover: {
-            content: 'Hello world 5',
             placement: 'start',
             position: 'left',
           }
         },
         {
           target: '.step-6',
+          content: 'Hello world 6',
           popover: {
-            content: 'Hello world 6',
             placement: 'center',
             position: 'right',
           }
         },
         {
           target: '.step-7',
+          content: 'Hello world 7',
           popover: {
-            content: 'Hello world 7',
             placement: 'center',
             position: 'left',
           }

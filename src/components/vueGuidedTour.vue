@@ -18,7 +18,7 @@
       />
     </div>
     <vgt-popover
-      v-if="active && showPopover && currentStep.popover"
+      v-if="showPopover && (currentStep.title || currentStep.content || $slots.content)"
       :overlay-rect="overlayRect"
       :arrow="arrow"
       :offset="offset"
@@ -42,18 +42,15 @@
         name="content" 
         v-bind="{ stepIndex: currentStepIndex }"
       >
-        <div
-          v-if="currentStep.popover.title || currentStep.popover.content"
-          class="vgt__content"
-        >
+        <div class="vgt__content">
           <h3
-            v-if="currentStep.popover.title"
+            v-if="currentStep.title"
             class="vgt__title"
           >
-            {{ currentStep.popover.title }}
+            {{ currentStep.title }}
           </h3>
-          <div v-if="currentStep.popover.content">
-            {{ currentStep.popover.content }}
+          <div v-if="currentStep.content">
+            {{ currentStep.content }}
           </div>
         </div>
       </slot>
