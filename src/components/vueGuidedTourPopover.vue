@@ -56,7 +56,7 @@ export default {
   },
   setup(props) {
     const popoverRef = ref(null)
-    const currentPosition = ref(null)
+    const currentPosition = ref(props.position)
 
     const x = ref(0)
     const y = ref(0)
