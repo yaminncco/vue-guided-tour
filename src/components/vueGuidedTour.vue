@@ -433,6 +433,7 @@ function useHightlight () {
 
 .vgt__overlay {
   background-color: #000;
+  pointer-events: auto;
 }
 .vgt__overlay--center {
   pointer-events: none !important;
