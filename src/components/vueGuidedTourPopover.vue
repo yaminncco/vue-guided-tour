@@ -16,13 +16,17 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
 import { getBoundingClientRect, isPositionVertical, isOutView } from '../utils'
 
 export default {
   name: 'VueGuidedTourPopover',
   inheritAttrs: false,
   props: {
+    overlaysRef: {
+      type: Array,
+      required: true
+    },
     overlayRect: {
       type: Object,
       required: true
@@ -61,8 +65,10 @@ export default {
     const x = ref(0)
     const y = ref(0)
 
+    let timeout = null
+
     const highlightRect = computed(() => {
-      const { width, height, y, x } = props.overlayRect['center']
+      const { width, height, y, x } = props.overlayRect
       return {
         width,
         height,
@@ -83,12 +89,29 @@ export default {
 
     onMounted(() => {
       initPopover()
+      window.addEventListener('resize', onResize)
+      window.addEventListener('scroll', onScroll)
     })
 
-    watch(props.overlayRect, () => {
-      initPopover()
+    onUnmounted(() => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', onScroll)
     })
-    
+
+    const onScroll = () => {
+      if (timeout) {
+        window.cancelAnimationFrame(timeout)
+      }
+      timeout = window.requestAnimationFrame(initPopover)
+    }
+
+    const onResize = () => {
+      if (timeout) {
+        window.cancelAnimationFrame(timeout)
+      }
+      timeout = window.requestAnimationFrame(initPopover)
+    }
+
     const initPopover = () => {
       adjustCurrentPosition()
       initPositionCoord()
@@ -170,26 +193,27 @@ export default {
       const arrowOffset = arrowRect.value.offset
       
       const outOffset = arrowSize + arrowOffset*2
-      const hTop = highlightRect.value.top + outOffset
-      const hBottom = highlightRect.value.bottom - outOffset
-      const hLeft = highlightRect.value.left + outOffset
-      const hRight = highlightRect.value.right - outOffset
-      
+      let { top: hTop, left: hLeft, bottom: hBottom, right: hRight } = props.overlaysRef['center'].getBoundingClientRect()
+      hTop += outOffset
+      hBottom -= outOffset
+      hLeft += outOffset
+      hRight -= outOffset
+
       const hIsOutView = isOutView({top: hBottom, bottom: hTop, left: hRight, right: hLeft})
       const hIsOutX = hIsOutView.left || hIsOutView.right
       const hIsOutY = hIsOutView.top || hIsOutView.bottom
       
       if ( isPositionVertical(currentPosition.value) ) {
         if (isPopoverOutView.left) {
-          x.value = !hIsOutX ? 0 : hRight
+          x.value = !hIsOutX ? window.scrollX : hRight + window.scrollX
         } else if (isPopoverOutView.right) {
-          x.value = !hIsOutX ? w - width : - width + hLeft
+          x.value = !hIsOutX ? w - width + window.scrollX : - width + hLeft + window.scrollX
         }
       } else {
         if (isPopoverOutView.top) {
-          y.value = !hIsOutY ? 0 : hBottom
+          y.value = !hIsOutY ? window.scrollY : hBottom + window.scrollY
         } else if (isPopoverOutView.bottom) {
-          y.value = !hIsOutY ? h - height : - height + hTop
+          y.value = !hIsOutY ? h - height + window.scrollY : - height + hTop + window.scrollY
         }
       }
     }
@@ -206,11 +230,12 @@ export default {
 
     const getSpaceSize = () => {
       const { innerWidth: w, innerHeight: h } = window
+      const { top, left, bottom, right } = props.overlaysRef['center'].getBoundingClientRect()
       return {
-        bottom: h - highlightRect.value.bottom,
-        top: highlightRect.value.top,
-        right: w - highlightRect.value.right,
-        left: highlightRect.value.left,
+        bottom: h - bottom,
+        top: top,
+        right: w - right,
+        left: left,
       }
     }
 

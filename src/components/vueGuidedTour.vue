@@ -1,97 +1,100 @@
 <template>
-  <div
-    ref="vgtRef"
-    class="vue-guided-tour"
-    :class="active && 'vgt--active'"
-  >
+  <teleport to="body">
     <div
-      :class="overlayClass"
-      :style="overlayStyle"
+      ref="vgtRef"
+      class="vue-guided-tour"
+      :class="active && 'vgt--active'"
     >
       <div
-        v-for="(overlay, key) in overlayRect" 
-        :key="key"
-        :ref="el => { if (el) overlayRefs[key] = el }"
-        :class="overlayRectClass(key)"
-        :style="overlayRectStyle(key)"
-        @click="onOverlayClick(key)"
-      />
-    </div>
-    <vgt-popover
-      v-if="showPopover && (currentStep.title || currentStep.content || $slots.content)"
-      :overlay-rect="overlayRect"
-      :arrow="arrow"
-      :offset="offset"
-      :position="position"
-      :placement="placement"
-      :auto-adjust="autoAdjust"
-      v-bind="{...currentStep.popover}"
-    >
-      <slot
-        v-if="closeBtn"
-        name="close"
+        class="vgt__overlay-wrapper"
+        :style="overlayWrapperStyle"
       >
-        <button
-          class="vgt__close vgt__btn--secondary"
-          @click="onCloseClick"
-        >
-          ×
-        </button>
-      </slot>
-      <slot
-        name="content" 
-        v-bind="{ stepIndex: currentStepIndex }"
-      >
-        <div class="vgt__content">
-          <h3
-            v-if="currentStep.title"
-            class="vgt__title"
-          >
-            {{ currentStep.title }}
-          </h3>
-          <div v-if="currentStep.content">
-            {{ currentStep.content }}
-          </div>
-        </div>
-      </slot>
-      <div class="vgt__footer">
         <div
-          v-if="pagination"
-          class="vgt__pages" 
-        >
-          {{ currentStepIndex+1 }} / {{ steps.length }}
-        </div>
+          v-for="(overlay, key) in overlaysRect"
+          :key="key"
+          :ref="el => { if (el) overlaysRef[key] = el }"
+          :class="`vgt__overlay vgt__overlay--${key}`"
+          :style="overlaysRectStyle(key)"
+          @click="onOverlayClick"
+        />
+      </div>
+      <vgt-popover
+        v-if="showPopover && (currentStep.title || currentStep.content || $slots.content)"
+        :overlays-ref="overlaysRef"
+        :overlay-rect="overlaysRect['center']"
+        :arrow="arrow"
+        :offset="offset"
+        :position="position"
+        :placement="placement"
+        :auto-adjust="autoAdjust"
+        v-bind="{...currentStep.popover}"
+      >
         <slot
-          name="nav"
-          v-bind="{ isFirstStep, isLastStep }"
+          v-if="closeBtn"
+          name="close"
         >
-          <div class="vgt__nav">
-            <button
-              v-if="!isFirstStep"
-              class="vgt__btn vgt__btn--secondary vgt__btn--prev"
-              @click="onPrev"
+          <button
+            class="vgt__close vgt__btn--secondary"
+            @click="onCloseClick"
+          >
+            ×
+          </button>
+        </slot>
+        <slot
+          name="content"
+          v-bind="{ stepIndex: currentStepIndex }"
+        >
+          <div class="vgt__content">
+            <h3
+              v-if="currentStep.title"
+              class="vgt__title"
             >
-              Prev
-            </button>
-            <button
-              v-if="isLastStep"
-              class="vgt__btn vgt__btn--primary"
-              @click="onEnd"
-            >
-              End
-            </button>
-            <button
-              v-else
-              class="vgt__btn vgt__btn--primary vgt__btn--next"
-              @click="onNext"
-            >
-              Next
-            </button>
+              {{ currentStep.title }}
+            </h3>
+            <div v-if="currentStep.content">
+              {{ currentStep.content }}
+            </div>
           </div>
         </slot>
-      </div>
-    </vgt-popover>
-  </div>
+        <div class="vgt__footer">
+          <div
+            v-if="pagination"
+            class="vgt__pages"
+          >
+            {{ currentStepIndex+1 }} / {{ steps.length }}
+          </div>
+          <slot
+            name="nav"
+            v-bind="{ isFirstStep, isLastStep }"
+          >
+            <div class="vgt__nav">
+              <button
+                v-if="!isFirstStep"
+                class="vgt__btn vgt__btn--secondary vgt__btn--prev"
+                @click="onPrev"
+              >
+                Prev
+              </button>
+              <button
+                v-if="isLastStep"
+                class="vgt__btn vgt__btn--primary"
+                @click="onEnd"
+              >
+                End
+              </button>
+              <button
+                v-else
+                class="vgt__btn vgt__btn--primary vgt__btn--next"
+                @click="onNext"
+              >
+                Next
+              </button>
+            </div>
+          </slot>
+        </div>
+      </vgt-popover>
+    </div>
+  </teleport>
 </template>
 
 <script>
@@ -191,13 +194,11 @@ export default {
     const {
       active,
       moving,
-      overlayClass,
-      overlayStyle,
-      overlayRefs,
-      overlayRect,
-      overlayRectClass,
-      overlayRectStyle,
-      updateOverlayRect,
+      overlaysRef,
+      overlaysRect,
+      overlaysRectStyle,
+      overlayWrapperStyle,
+      overlayUpdate,
       overlayFadeIn,
       overlayFadeOut,
       overlayMove
@@ -210,7 +211,7 @@ export default {
     } = useHightlight()
   
     onBeforeUpdate(() => {
-      overlayRefs.value = []
+      overlaysRef.value = []
     })
     onMounted(() => {
       $vgt.start = onStart
@@ -290,15 +291,13 @@ export default {
         })
       }
 
-      requestAnimationFrame(() => {
+      const done = () => {
         preventScroll = false
-        const done = () => {
-          addHighlight(el)
-          showPopover.value = true
-          emit(!prevEl.value ? 'afterStart' : 'afterMove')
-        }
-        !prevEl.value ? overlayFadeIn(done) : overlayMove(done)
-      })
+        addHighlight(el)
+        showPopover.value = true
+        emit(!prevEl.value ? 'afterStart' : 'afterMove')
+      }
+      !prevEl.value ? overlayFadeIn(done) : overlayMove(done)
     }
 
     const updateCurrentStep = (index, el) => {
@@ -351,7 +350,7 @@ export default {
       if (timeout) {
         window.cancelAnimationFrame(timeout)
       }
-      timeout = window.requestAnimationFrame(updateOverlayRect)
+      timeout = window.requestAnimationFrame(overlayUpdate)
     }
 
     const onScroll = () => {
@@ -359,7 +358,7 @@ export default {
       if (timeout) {
         window.cancelAnimationFrame(timeout)
       }
-      timeout = window.requestAnimationFrame(updateOverlayRect)
+      timeout = window.requestAnimationFrame(overlayUpdate)
     }
 
     return {
@@ -370,12 +369,10 @@ export default {
       isFirstStep,
       isLastStep,
       active,
-      overlayClass,
-      overlayStyle,
-      overlayRefs,
-      overlayRect,
-      overlayRectClass,
-      overlayRectStyle,
+      overlaysRef,
+      overlaysRect,
+      overlaysRectStyle,
+      overlayWrapperStyle,
       onStart,
       onNext,
       onPrev,
@@ -426,25 +423,16 @@ function useHightlight () {
 
 <style>
 .vue-guided-tour {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
+}
+.vgt--active {
   z-index: 99999 !important;
 }
-/*
-.vgt--active {}
-*/
 
 .vgt__overlay {
-  background: #000;
-}
-.vgt__overlay--hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-.vgt__overlay--visible {
-  opacity: 0.65;
-  visibility: visible;
+  background-color: #000;
 }
 .vgt__overlay--center {
   pointer-events: none !important;

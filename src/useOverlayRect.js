@@ -1,8 +1,12 @@
-import { ref, reactive, computed } from 'vue';
+import { ref, reactive, computed, nextTick } from 'vue';
 import { getBoundingClientRect } from './utils'
 
 export default function useOverlayRect (props, currentStepIndex, prevStepIndex, currentStepEl, prevStepEl) {
-  const overlayRefs = ref([])
+  const overlayWrapper = reactive({
+    width: 0,
+    height: 0
+  })
+  const overlaysRef = ref([])
   const overlayRectDefault = {}
   const keys = ['top', 'left', 'bottom', 'right', 'center']
   keys.forEach(key => {
@@ -15,47 +19,42 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
       scaleY: 1
     }
   })
-  const overlayRect = reactive(overlayRectDefault)
- 
+  const overlaysRect = reactive(overlayRectDefault)
+
   const active = ref(false)
   const fadeDuration = 300
-  
-  const moving = ref(null)
+  const moving = ref(false)
   const moveDuration = 450
   const moveEase = 'cubic-bezier(.65,.05,.36,1)'
- 
-  const overlayClass = computed(() => {
-    return active.value ? 'vgt__overlay--visible' : 'vgt__overlay--hidden'
-  })
-  
-  const overlayStyle = computed(() => {
+
+  const overlayWrapperStyle = computed(() => {
     return {
+      'width': `${overlayWrapper.width}px`,
+      'height': `${overlayWrapper.height}px`,
+      'overflow': 'hidden',
+      'position': 'absolute',
+      'top': '0px',
+      'left': '0px',
+      'opacity': active.value ? '0.65' : '0',
+      'visibility': active.value ? 'visible' : 'hidden',
       'transition': `${fadeDuration}ms opacity, ${fadeDuration}ms visibility`
     }
   })
 
-  const overlayRectClass = computed(() => {
-    return (key) => [
-      `vgt__overlay vgt__overlay--${key}`
-    ]
-  })
-
-  const overlayRectStyle = computed(() => {
+  const overlaysRectStyle = computed(() => {
     return (key) => {
-      const overlay = overlayRect[key]
+      const overlay = overlaysRect[key]
       if (!overlay) return null
-      const { innerWidth: w, innerHeight: h } = window
-
       const position = {
         position: 'absolute'
       }
       let transformOrigin = null
 
       if (key === 'bottom') {
-        position.bottom = `${-h}px`
+        position.bottom = '0px'
         transformOrigin = 'bottom left'
       } else if (key === 'right') {
-        position.right = `${-w}px`
+        position.right = '0px'
         transformOrigin = 'top right'
       } else {
         position.top = '0px'
@@ -74,7 +73,8 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
   })
 
   const getOverlayRect = (el, index) => {
-    const { innerWidth: w, innerHeight: h } = window
+    const w = overlayWrapper.width
+    const h = overlayWrapper.height
     
     const size = 200
     const padding = props.steps[index].padding ? props.steps[index].padding : props.padding
@@ -84,39 +84,39 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
       width: size,
       height: size,
       x: 0,
-      y: top < 0 ? -size + top : 0,
+      y: top + window.scrollY < 0 ? -size + top + window.scrollY : 0,
       scaleX: w/size,
-      scaleY: top < 0 ? 1 : top/size
+      scaleY: top + window.scrollY < 0 ? 1 : (top + window.scrollY)/size
     }
     const leftOverlay = {
       width: size,
       height: size,
-      x: left < 0 ? -size + left : 0,
+      x: left + window.scrollX < 0 ? -size + left + window.scrollX : 0,
       y: 0,
-      scaleX: left < 0 ? 1 : left/size,
+      scaleX: left + window.scrollX < 0 ? 1 : (left + window.scrollX)/size,
       scaleY: h/size
     }
     const rightOverlay = {
       width: size,
       height: size,
-      x: right > w ? - (w - right) + size : 0,
+      x: right + window.scrollX > w ? - (w - (right + window.scrollX)) + size : 0,
       y: 0,
-      scaleX: right > w ? 1 : (w - right)/size,
+      scaleX: right + window.scrollX > w ? 1 : (w - (right + window.scrollX))/size,
       scaleY: h/size
     }
     const bottomOverlay = {
       width: size,
       height: size,
       x: 0,
-      y: bottom > h ? - (h - bottom) + size : 0,
+      y: bottom + window.scrollY > h ? - (h - (bottom + window.scrollY)) + size : 0,
       scaleX: w/size,
-      scaleY: bottom > h ? 1 : (h - bottom)/size
+      scaleY: bottom + window.scrollY > h ? 1 : (h - (bottom + window.scrollY))/size
     }
     const centerOverlay = {
       width,
       height,
-      x: left,
-      y: top,
+      x: left + window.scrollX,
+      y: top + window.scrollY,
       scaleX: 1,
       scaleY: 1,
     }
@@ -130,11 +130,30 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
     }
   }
 
-  const updateOverlayRect = () => {
-    if (!active.value || moving.value) return
+  const updateOverlayWrapper = () => {
+    const fullHeight = Math.max(
+      document.body.scrollHeight, document.documentElement.scrollHeight,
+      document.body.offsetHeight, document.documentElement.offsetHeight,
+      document.body.clientHeight, document.documentElement.clientHeight
+    )
+    const fullWidth = Math.max(
+      document.body.scrollWidth, document.documentElement.scrollWidth,
+      document.body.offsetWidth, document.documentElement.offsetWidth,
+      document.body.clientWidth, document.documentElement.clientWidth
+    )
+    overlayWrapper.width = fullWidth
+    overlayWrapper.height = fullHeight
+  }
+
+  const resetOverlayWrapper = () => {
+    overlayWrapper.width = 0
+    overlayWrapper.height = 0
+  }
+
+  const updateOverlaysRect = () => {
     const currentOverlayRect = getOverlayRect(currentStepEl.value, currentStepIndex.value)
-    for (const overlayKey in overlayRect) {
-      const overlay = overlayRect[overlayKey]       
+    for (const overlayKey in overlaysRect) {
+      const overlay = overlaysRect[overlayKey]       
       overlay.width = currentOverlayRect[overlayKey].width
       overlay.height = currentOverlayRect[overlayKey].height
       overlay.x = currentOverlayRect[overlayKey].x
@@ -144,13 +163,12 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
     }
   }
 
-  const invertOverlayRect = () => {
-    const prev = prevStepEl.value
-    const prevOverlayRect = getOverlayRect(prev, prevStepIndex.value)
+  const invertOverlaysRect = () => {
+    const prevOverlayRect = getOverlayRect(prevStepEl.value, prevStepIndex.value)
     const currentOverlayRect = getOverlayRect(currentStepEl.value, currentStepIndex.value)
 
-    for (const overlayKey in overlayRect) {
-      const overlay = overlayRect[overlayKey]
+    for (const overlayKey in overlaysRect) {
+      const overlay = overlaysRect[overlayKey]
       if (overlayKey === 'center') {
         overlay.x += (prevOverlayRect[overlayKey].x - currentOverlayRect[overlayKey].x)
         overlay.y += (prevOverlayRect[overlayKey].y - currentOverlayRect[overlayKey].y)
@@ -165,27 +183,36 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
     }
   }
 
-  const moveOverlayRect = (callback = undefined) => {
-    for (const overlayKey in overlayRect) {
-      overlayRefs.value[overlayKey].style.transition = `${moveDuration}ms transform ${moveEase}`
+  const moveOverlaysRect = (callback = undefined) => {
+    for (const overlayKey in overlaysRect) {
+      overlaysRef.value[overlayKey].style.transition = `${moveDuration}ms transform ${moveEase}`
     }
 
-    updateOverlayRect()
+    updateOverlaysRect()
 
-    moving.value =  setTimeout(() => {
-      for (const overlayKey in overlayRect) {
-        overlayRefs.value[overlayKey].style.transition = ``
+    setTimeout(() => {
+      for (const overlayKey in overlaysRect) {
+        overlaysRef.value[overlayKey].style.transition = ``
       }
-      moving.value = null
+      moving.value = false
       if (callback) {
         callback()
       }
     }, moveDuration)
   }
 
+  const overlayUpdate = () => {
+    if (!active.value || moving.value) return
+    resetOverlayWrapper()
+    nextTick(() => {
+      updateOverlayWrapper()
+      updateOverlaysRect()
+    })
+  }
+
   const overlayFadeIn = (callback  = undefined) => {
     active.value = true
-    updateOverlayRect()
+    overlayUpdate()
     setTimeout(() => {
       if (callback) {
         callback()
@@ -203,23 +230,26 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
   }
 
   const overlayMove = (callback) => {
-    updateOverlayRect()
-    invertOverlayRect()
-    requestAnimationFrame(() => {
-      moveOverlayRect(callback)
+    moving.value = true
+    resetOverlayWrapper()
+    nextTick(() => {
+      updateOverlayWrapper()
+      updateOverlaysRect()
+      invertOverlaysRect()
+      setTimeout(() => {
+        moveOverlaysRect(callback)
+      }, 16)
     })
   }
 
   return {
+    overlaysRef,
+    overlaysRect,
+    overlaysRectStyle,
+    overlayWrapperStyle,
     active,
     moving,
-    overlayClass,
-    overlayStyle,
-    overlayRefs,
-    overlayRect,
-    overlayRectClass,
-    overlayRectStyle,
-    updateOverlayRect,
+    overlayUpdate,
     overlayFadeIn,
     overlayFadeOut,
     overlayMove,
