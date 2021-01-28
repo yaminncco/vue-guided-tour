@@ -233,28 +233,21 @@ export default {
     
     const onStart = (index = 0) => {
       if (active.value) return
-      const el = getHighlightEl(index, props.steps)
-      if (el) {
-        handleStepIndexChange(index, el)
-      }
+      handleStepIndexChange(index)
     }
 
     const onNext = () => {
       if (!active.value || moving.value) return
       const index = currentStepIndex.value + 1
-      const el = getHighlightEl(index, props.steps)
-      if (el) {
-        handleStepIndexChange(index, el)
-      }
+      if (index > props.steps.length-1) return
+      handleStepIndexChange(index)
     }
 
     const onPrev = () => {
       if (!active.value || moving.value) return
       const index = currentStepIndex.value - 1
-      const el = getHighlightEl(index, props.steps)
-      if (el) {
-        handleStepIndexChange(index, el)
-      }
+      if (index < 0) return
+      handleStepIndexChange(index)
     }
   
     const onEnd = () => {
@@ -265,13 +258,12 @@ export default {
 
     const onMove = (index = 0) => {
       if (index === currentStepIndex.value || !active.value || moving.value) return
-      const el = getHighlightEl(index, props.steps)
-      if (el) {
-        handleStepIndexChange(index, el)
-      }
+      handleStepIndexChange(index)
     }
 
-    const handleStepIndexChange = (index, el) => {     
+    const handleStepIndexChange = (index) => {
+      const el = getHighlightEl(index, props.steps)
+      if (!el && index !== -1) return
       showPopover.value = false
       removeHighlight()
       
