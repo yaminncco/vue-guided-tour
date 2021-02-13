@@ -37,7 +37,7 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
       'left': '0px',
       'opacity': active.value ? '0.65' : '0',
       'visibility': active.value ? 'visible' : 'hidden',
-      'pointer-events': 'none',
+      'pointer-events': props.allowInteraction && 'none',
       'transition': `${fadeDuration}ms opacity, ${fadeDuration}ms visibility`
     }
   })

@@ -167,6 +167,10 @@ export default {
     allowEscClose: {
       type: Boolean,
       default: true
+    },
+    allowInteraction: {
+      type: Boolean,
+      default: true
     }
   },
   emits: ['update:stepIndex', 'afterStart', 'afterEnd', 'afterMove'],
