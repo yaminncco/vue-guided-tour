@@ -16,7 +16,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, nextTick, onUnmounted } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { getBoundingClientRect, isPositionVertical, isOutView } from '../utils'
 
 export default {
@@ -30,6 +30,10 @@ export default {
     overlayRect: {
       type: Object,
       required: true
+    },
+    updatePopover: {
+      type: Boolean,
+      default: false
     },
     arrow: {
       type: Boolean,
@@ -58,14 +62,13 @@ export default {
       default: true
     },
   },
-  setup(props) {
+  emits: ['update:updatePopover'],
+  setup(props, { emit }) {
     const popoverRef = ref(null)
     const currentPosition = ref(props.position)
 
     const x = ref(0)
     const y = ref(0)
-
-    let timeout = null
 
     const highlightRect = computed(() => {
       const { width, height, y, x } = props.overlayRect
@@ -89,28 +92,13 @@ export default {
 
     onMounted(() => {
       initPopover()
-      window.addEventListener('resize', onResize)
-      window.addEventListener('scroll', onScroll)
     })
 
-    onUnmounted(() => {
-      window.removeEventListener('resize', onResize)
-      window.removeEventListener('scroll', onScroll)
+    watch(() => props.updatePopover, () => {
+      if (props.updatePopover) {
+        initPopover()
+      }
     })
-
-    const onScroll = () => {
-      if (timeout) {
-        window.cancelAnimationFrame(timeout)
-      }
-      timeout = window.requestAnimationFrame(initPopover)
-    }
-
-    const onResize = () => {
-      if (timeout) {
-        window.cancelAnimationFrame(timeout)
-      }
-      timeout = window.requestAnimationFrame(initPopover)
-    }
 
     const initPopover = () => {
       adjustCurrentPosition()
@@ -118,6 +106,7 @@ export default {
       nextTick(() => {
         adjustPositionCoord()
         initArrowPositionCoord()
+        emit('update:updatePopover', false)
       })
     }
 

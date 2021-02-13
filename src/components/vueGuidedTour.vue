@@ -20,6 +20,7 @@
       </div>
       <vgt-popover
         v-if="showPopover && (currentStep.title || currentStep.content || $slots.content)"
+        v-model:update-popover="updatePopover"
         :overlays-ref="overlaysRef"
         :overlay-rect="overlaysRect['center']"
         :arrow="arrow"
@@ -172,6 +173,7 @@ export default {
   setup(props, { emit }) {
     const vgtRef = ref(null)
     const showPopover = ref(false)
+    const updatePopover = ref(false)
     const currentStepIndex = ref(props.stepIndex)
     const currentStepEl = ref(null)
     const prevIndex = ref(null)
@@ -342,7 +344,7 @@ export default {
       if (timeout) {
         window.cancelAnimationFrame(timeout)
       }
-      timeout = window.requestAnimationFrame(overlayUpdate)
+      timeout = window.requestAnimationFrame(onUpdate)
     }
 
     const onScroll = () => {
@@ -350,12 +352,18 @@ export default {
       if (timeout) {
         window.cancelAnimationFrame(timeout)
       }
-      timeout = window.requestAnimationFrame(overlayUpdate)
+      timeout = window.requestAnimationFrame(onUpdate)
+    }
+
+    const onUpdate = () => {
+      overlayUpdate()
+      updatePopover.value = true
     }
 
     return {
       vgtRef,
       showPopover,
+      updatePopover,
       currentStepIndex,
       currentStep,
       isFirstStep,
@@ -372,7 +380,8 @@ export default {
       onMove,
       onKeyUp,
       onOverlayClick,
-      onCloseClick
+      onCloseClick,
+      onUpdate
     }
   },
 }
