@@ -27,10 +27,6 @@ export default {
       type: Array,
       required: true
     },
-    overlayRect: {
-      type: Object,
-      required: true
-    },
     updatePopover: {
       type: Boolean,
       default: false
@@ -71,14 +67,14 @@ export default {
     const y = ref(0)
 
     const highlightRect = computed(() => {
-      const { width, height, y, x } = props.overlayRect
+      const { top, left, bottom, right, width, height } = props.overlaysRef['center'].getBoundingClientRect()
       return {
         width,
         height,
-        top: y,
-        left: x,
-        bottom: y + height,
-        right: x + width
+        top,
+        left,
+        bottom,
+        right
       }
     })
 
@@ -182,11 +178,10 @@ export default {
       const arrowOffset = arrowRect.value.offset
       
       const outOffset = arrowSize + arrowOffset*2
-      let { top: hTop, left: hLeft, bottom: hBottom, right: hRight } = props.overlaysRef['center'].getBoundingClientRect()
-      hTop += outOffset
-      hBottom -= outOffset
-      hLeft += outOffset
-      hRight -= outOffset
+      const hTop = highlightRect.value.top + outOffset
+      const hBottom = highlightRect.value.bottom - outOffset
+      const hLeft = highlightRect.value.left + outOffset
+      const hRight = highlightRect.value.right - outOffset
 
       const hIsOutView = isOutView({top: hBottom, bottom: hTop, left: hRight, right: hLeft})
       const hIsOutX = hIsOutView.left || hIsOutView.right
@@ -194,15 +189,15 @@ export default {
       
       if ( isPositionVertical(currentPosition.value) ) {
         if (isPopoverOutView.left) {
-          x.value = !hIsOutX ? window.scrollX : hRight + window.scrollX
+          x.value = !hIsOutX ? 0 : hRight
         } else if (isPopoverOutView.right) {
-          x.value = !hIsOutX ? w - width + window.scrollX : - width + hLeft + window.scrollX
+          x.value = !hIsOutX ? w - width : - width + hLeft
         }
       } else {
         if (isPopoverOutView.top) {
-          y.value = !hIsOutY ? window.scrollY : hBottom + window.scrollY
+          y.value = !hIsOutY ? 0 : hBottom
         } else if (isPopoverOutView.bottom) {
-          y.value = !hIsOutY ? h - height + window.scrollY : - height + hTop + window.scrollY
+          y.value = !hIsOutY ? h - height : - height + hTop
         }
       }
     }
@@ -328,7 +323,7 @@ function useArrow (props, popoverX, popoverY, popoverRef, position, highlightRec
 
 <style>
 .vgt__popover {
-  position: absolute;
+  position: fixed;
   background: #fff;
   margin: 0;
   padding: 15px;

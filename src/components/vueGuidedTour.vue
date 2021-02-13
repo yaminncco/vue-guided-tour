@@ -22,7 +22,6 @@
         v-if="showPopover && (currentStep.title || currentStep.content || $slots.content)"
         v-model:update-popover="updatePopover"
         :overlays-ref="overlaysRef"
-        :overlay-rect="overlaysRect['center']"
         :arrow="arrow"
         :offset="offset"
         :position="position"
