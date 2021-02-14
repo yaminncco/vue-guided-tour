@@ -99,7 +99,7 @@
 
 <script>
 import VueGuidedTourPopover from './vueGuidedTourPopover.vue'
-import { ref, computed, onMounted, onUnmounted, onBeforeUpdate, inject } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onBeforeUpdate, inject, nextTick } from 'vue'
 import useOverlayRect from '../useOverlayRect'
 import { isInView } from '../utils'
 
@@ -292,6 +292,13 @@ export default {
         preventScroll = false
         addHighlight(el)
         showPopover.value = true
+        nextTick(() => {
+          const focusableEls = getFocusableElements()
+          if (focusableEls.length > 0) {
+            const firstFocusableEl = focusableEls[0]
+            firstFocusableEl.focus()
+          }
+        })
         emit(!prevEl.value ? 'afterStart' : 'afterMove')
       }
       !prevEl.value ? overlayFadeIn(done) : overlayMove(done)
@@ -314,24 +321,50 @@ export default {
     const onKeyUp = (event) => {
       if (!active.value || !props.allowKeyboardEvent) return
       switch (event.key) {
-      case ('Escape'):
+      case 'Escape':
         if (props.allowEscClose) {
           onEnd()
         }
         break
-      case ('ArrowLeft'):
+      case 'ArrowLeft':
         onPrev()
         break
-      case ('ArrowRight'):
+      case 'ArrowRight':
         onNext()
         break
       }
     }
 
     const onKeyDown = (event) => {
-      if (!active.value || !props.allowKeyboardEvent) return
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
-      event.preventDefault()
+      if (!active.value) return
+      const focusableEls = getFocusableElements()
+      switch (event.key) {
+      case 'Tab':
+        if (focusableEls.length === 0)  {
+          event.preventDefault()
+        } else {
+          const firstFocusableEl = focusableEls[0]
+          const lastFocusableEl = focusableEls[focusableEls.length - 1]
+          if (event.shiftKey) {
+            if (document.activeElement === firstFocusableEl) {
+              lastFocusableEl.focus()
+              event.preventDefault()
+            }
+          } else {
+            if (document.activeElement === lastFocusableEl) {
+              firstFocusableEl.focus()
+              event.preventDefault()
+            }
+          }
+        }
+        break
+      case 'ArrowLeft':
+      case 'ArrowRight':
+        if (props.allowKeyboardEvent) {
+          event.preventDefault()
+        }
+        break
+      }
     }
 
     const onOverlayClick = () => {
@@ -361,6 +394,29 @@ export default {
     const onUpdate = () => {
       overlayUpdate()
       updatePopover.value = true
+    }
+
+    const getFocusableElements = () => {
+      const selector = `button, [href], input, select, textarea, [tabindex]`
+      const focusableEls = [...vgtRef.value.querySelectorAll(selector)].filter((el) => {
+        if (parseInt(el.getAttribute('tabindex'), 10) < 0) {
+          return false
+        }
+        if (el.disabled) {
+          return false
+        }
+        while (el) {
+          if (
+            getComputedStyle(el).display === 'none' ||
+            getComputedStyle(el).visibility  === 'hidden'
+          ) {
+            return false
+          }
+          el = el.parentElement
+        }
+        return true
+      })
+      return focusableEls
     }
 
     return {

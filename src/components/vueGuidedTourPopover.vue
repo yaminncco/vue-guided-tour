@@ -1,6 +1,7 @@
 <template>
   <div
     ref="popoverRef"
+    role="dialog"
     class="vgt__popover"
     :style="popoverStyle"
   >
