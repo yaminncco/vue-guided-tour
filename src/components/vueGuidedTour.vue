@@ -35,6 +35,7 @@
         >
           <button
             class="vgt__close vgt__btn--secondary"
+            aria-label="close"
             @click="onCloseClick"
           >
             ×
