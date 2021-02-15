@@ -19,45 +19,14 @@
 <script>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { getBoundingClientRect, isPositionVertical, isOutView } from '../utils'
+import { popoverProps, popoverOptions } from '../propsValidation'
 
 export default {
   name: 'VueGuidedTourPopover',
   inheritAttrs: false,
   props: {
-    overlaysRef: {
-      type: Array,
-      required: true
-    },
-    updatePopover: {
-      type: Boolean,
-      default: false
-    },
-    arrow: {
-      type: Boolean,
-      default: true
-    },
-    offset: {
-      type: Number,
-      default: 0
-    },
-    position: {
-      type: String,
-      default: 'bottom',
-      validator: function (value) {
-        return ['top', 'left', 'right', 'bottom'].indexOf(value) !== -1
-      }
-    },
-    placement: {
-      type: String,
-      default: 'start',
-      validator: function (value) {
-        return ['start', 'center', 'end'].indexOf(value) !== -1
-      }
-    },
-    autoAdjust: {
-      type: Boolean,
-      default: true
-    },
+    ...popoverProps,
+    ...popoverOptions
   },
   emits: ['update:updatePopover'],
   setup(props, { emit }) {
