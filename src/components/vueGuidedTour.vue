@@ -266,6 +266,14 @@ export default {
       handleStepIndexChange(index)
     }
 
+    const onUpdate = () => {
+      if (!active.value || moving.value) return
+      overlayUpdate()
+      nextTick(() => {
+        updatePopover.value = true
+      })
+    }
+
     const handleStepIndexChange = (index) => {
       const el = getHighlightEl(index, props.steps)
       if (!el && index !== -1) return
@@ -389,11 +397,6 @@ export default {
         window.cancelAnimationFrame(timeout)
       }
       timeout = window.requestAnimationFrame(onUpdate)
-    }
-
-    const onUpdate = () => {
-      overlayUpdate()
-      updatePopover.value = true
     }
 
     const getFocusableElements = () => {
