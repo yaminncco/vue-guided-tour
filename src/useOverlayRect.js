@@ -214,7 +214,9 @@ export default function useOverlayRect (props, currentStepIndex, prevStepIndex, 
   const overlayFadeIn = (callback  = undefined) => {
     active.value = true
     overlayUpdate()
+    moving.value = true
     setTimeout(() => {
+      moving.value = false
       if (callback) {
         callback()
       }
