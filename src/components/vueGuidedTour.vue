@@ -34,29 +34,32 @@
           name="close"
         >
           <button
-            class="vgt__close vgt__btn--secondary"
+            class="vgt__close-btn"
             aria-label="close"
             @click="onCloseClick"
           >
             ×
           </button>
         </slot>
-        <slot
-          name="content"
-          v-bind="{ stepIndex: currentStepIndex }"
-        >
-          <div class="vgt__content">
+        <div class="vgt__body">
+          <slot
+            name="content"
+            v-bind="{ stepIndex: currentStepIndex }"
+          >
             <h3
               v-if="currentStep.title"
               class="vgt__title"
             >
               {{ currentStep.title }}
             </h3>
-            <div v-if="currentStep.content">
+            <div
+              v-if="currentStep.content"
+              class="vgt__content"
+            >
               {{ currentStep.content }}
             </div>
-          </div>
-        </slot>
+          </slot>
+        </div>
         <div class="vgt__footer">
           <div
             v-if="pagination"
@@ -71,21 +74,21 @@
             <div class="vgt__nav">
               <button
                 v-if="!isFirstStep"
-                class="vgt__btn vgt__btn--secondary vgt__btn--prev"
+                class="vgt__btn vgt__btn--secondary vgt__prev-btn"
                 @click="onPrev"
               >
                 Prev
               </button>
               <button
                 v-if="isLastStep"
-                class="vgt__btn vgt__btn--primary"
+                class="vgt__btn vgt__btn--primary vgt__end-btn"
                 @click="onEnd"
               >
                 End
               </button>
               <button
                 v-else
-                class="vgt__btn vgt__btn--primary vgt__btn--next"
+                class="vgt__btn vgt__btn--primary vgt__next-btn"
                 @click="onNext"
               >
                 Next
@@ -450,66 +453,89 @@ function useHightlight () {
 }
 */
 
-.vgt__title {
-  font-size: 24px;
-}
-.vgt__content {
+.vgt__body {
+  line-height: 1.5;
   margin-top: 30px;
   margin-bottom: 20px;
 }
+.vgt__title {
+  font-size: 1.4rem;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+.vgt__content {
+  font-size: 1rem;
+  margin: 0;
+}
+
 .vgt__footer {
   display: flex;
   align-items: center;
 }
 .vgt__pages {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 500;
   color: #969faf;
 }
 .vgt__nav {
   margin-left: auto;
 }
 .vgt__btn {
-  padding: 10px 15px;
-  height: auto;
-  width: auto;
-  border: none;
-  border-radius: 4px;
   display: inline-block;
-  font-family: sans-serif;
-  font-size: 12px;
-  font-weight: 700;
+  padding: 5px 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 20px;
   cursor: pointer;
   text-decoration: none;
+  border-radius: 4px;
+  box-sizing: border-box;
+  border: none;
+  transition: background-color .1s ease, color .1s ease;
 }
 .vgt__btn--primary {
-  background: #41b883;
+  background-color: #3eaf7c;
   color: #fff;
 }
-.vgt__btn--secondary {
-  background: none;
-  color: #969faf;
+.vgt__btn--primary:hover {
+  background-color: #4abf8a;
 }
 
-.vgt__btn--prev {
+.vgt__btn--secondary {
+  background-color: transparent;
+  color: #969faf;
+}
+.vgt__btn--secondary:hover {
+  color: #5B6474;
+}
+
+.vgt__prev-btn {
   margin-right: 7px;
 }
 /*
-.vgt__btn--next {}
+.vgt__next-btn {}
+.vgt__end-btn {}
 */
 
-.vgt__close {
+.vgt__close-btn {
   position: absolute;
   top: 0;
   right: 0;
   border: none;
+  background-color: transparent;
   cursor: pointer;
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 12px;
+  font-size: 0.8rem;
   font-weight: 700;
   height: 36px;
   line-height: 36px;
   width: 36px;
   padding: 0;
+  margin: 0;
+  color: #969faf;
+  transition: color .1s ease;
+}
+.vgt__close-btn:hover {
+  color: #5B6474;
 }
 </style>
