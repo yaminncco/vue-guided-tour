@@ -5,29 +5,31 @@
       class="vue-guided-tour"
       :class="active && 'vgt--active'"
     >
-      <div
-        class="vgt__overlay-wrapper"
-        :style="overlayWrapperStyle"
-      >
-        <div
-          v-for="(overlay, key) in overlaysRect"
-          :key="key"
-          :ref="el => { if (el) overlaysRef[key] = el }"
-          :class="`vgt__overlay vgt__overlay--${key}`"
-          :style="overlaysRectStyle(key)"
-          @click="onOverlayClick"
-        />
-      </div>
+      <vgt-overlay
+        ref="vgtOverlay"
+        :padding="padding"
+        :allow-overlay-close="allowOverlayClose"
+        :allow-esc-close="allowEscClose"
+        :allow-interaction="allowInteraction"
+        :prevent-scroll="preventScroll"
+        v-bind="{ ...currentStep.overlay }"
+        @overlay-click="onOverlayClick"
+      />
       <vgt-popover
-        v-if="showPopover && (currentStep.title || currentStep.content || $slots.content)"
-        v-model:update-popover="updatePopover"
-        :overlays-ref="overlaysRef"
+        v-if="
+          showPopover && ( 
+            currentStep.title ||
+            currentStep.content ||
+            $slots.content
+          )
+        "
+        :target-bounds="currentTargetBounds"
         :arrow="arrow"
         :offset="offset"
         :position="position"
         :placement="placement"
         :auto-adjust="autoAdjust"
-        v-bind="{...currentStep.popover}"
+        v-bind="{ ...currentStep.popover }"
       >
         <slot
           v-if="closeBtn"
@@ -65,7 +67,7 @@
             v-if="pagination"
             class="vgt__pages"
           >
-            {{ currentStepIndex+1 }} / {{ steps.length }}
+            {{ currentStepIndex + 1 }} / {{ steps.length }}
           </div>
           <slot
             name="nav"
@@ -102,284 +104,292 @@
 </template>
 
 <script>
-import VueGuidedTourPopover from './vueGuidedTourPopover.vue'
-import { ref, computed, onMounted, onUnmounted, onBeforeUpdate, inject, nextTick } from 'vue'
-import useOverlayRect from '../useOverlayRect'
-import { isInView } from '../utils'
-import { vgtProps, popoverOptions } from '../propsValidation'
+import VueGuidedOverlay from "./vueGuidedOverlay.vue";
+import VueGuidedPopover from "./vueGuidedPopover.vue";
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  inject,
+  nextTick,
+  watch,
+  toRefs,
+} from "vue";
+import { isInView } from "../utils";
+import { vgtProps } from "../propsValidation";
 
 export default {
-  name: 'VueGuidedTour',
+  name: "VueGuidedTour",
   components: {
-    'vgt-popover': VueGuidedTourPopover
+    "vgt-overlay": VueGuidedOverlay,
+    "vgt-popover": VueGuidedPopover,
   },
   props: {
     ...vgtProps,
-    ...popoverOptions
   },
-  emits: ['update:stepIndex', 'afterStart', 'afterEnd', 'afterMove'],
+  emits: ["update:stepIndex", "afterStart", "afterEnd", "afterMove"],
   setup(props, { emit }) {
-    const vgtRef = ref(null)
-    const showPopover = ref(false)
-    const updatePopover = ref(false)
-    const currentStepIndex = ref(props.stepIndex)
-    const currentStepEl = ref(null)
-    const prevIndex = ref(null)
-    const prevEl = ref(null)
-    let timeout = null
-    let preventScroll = false
-    
-    const $vgt = inject('$vgt')
-    
-    const currentStep = computed(() => {
-      return props.steps[currentStepIndex.value]
-    })
-    const isFirstStep = computed(() => {
-      return currentStepIndex.value === 0
-    })
-    const isLastStep = computed(() => {
-      return currentStepIndex.value === props.steps.length-1
-    })
-  
     const {
-      active,
-      moving,
-      overlaysRef,
-      overlaysRect,
-      overlaysRectStyle,
-      overlayWrapperStyle,
-      overlayUpdate,
-      overlayFadeIn,
-      overlayFadeOut,
-      overlayMove
-    } = useOverlayRect(props, currentStepIndex, prevIndex, currentStepEl, prevEl)
+      stepIndex,
+      steps,
+      allowKeyboardEvent,
+      allowEscClose,
+      allowOverlayClose,
+    } = toRefs(props);
+    const vgtRef = ref(null);
+    const vgtOverlay = ref(null);
 
-    const {
-      getHighlightEl,
-      addHighlight,
-      removeHighlight
-    } = useHightlight()
-  
-    onBeforeUpdate(() => {
-      overlaysRef.value = []
-    })
+    const showPopover = ref(false);
+
+    const currentStepIndex = ref(-1);
+    currentStepIndex.value = stepIndex.value;
+
+    const currentStepEl = ref(null);
+    const prevEl = ref(null);
+
+    const active = ref(false);
+    const moving = ref(false);
+    const preventScroll = ref(false);
+
+    const $vgt = inject("$vgt");
+
+    const currentStep = computed(() => {
+      if (currentStepIndex.value === -1) return {};
+      const stepObj = steps.value[currentStepIndex.value];
+      return {
+        ...stepObj,
+        popover: {
+          ...stepObj.popover,
+        },
+        overlay: {
+          padding: stepObj.padding,
+          // ...stepObj.overlay
+        },
+      };
+    });
+    const isFirstStep = computed(() => {
+      return currentStepIndex.value === 0;
+    });
+    const isLastStep = computed(() => {
+      return currentStepIndex.value === steps.value.length - 1;
+    });
+
+    const currentTargetBounds = computed(() => {
+      return vgtOverlay.value.currentTargetBounds;
+    });
+
+    const { getHighlightEl, addHighlight, removeHighlight } = useHightlight();
+
     onMounted(() => {
-      $vgt.start = onStart
-      $vgt.next = onNext
-      $vgt.prev = onPrev
-      $vgt.end = onEnd
-      $vgt.move = onMove
-      window.addEventListener('keydown', onKeyDown)
-      window.addEventListener('keyup', onKeyUp)
-      window.addEventListener('resize', onResize)
-      window.addEventListener('scroll', onScroll)
-    })
+      $vgt.start = onStart;
+      $vgt.next = onNext;
+      $vgt.prev = onPrev;
+      $vgt.end = onEnd;
+      $vgt.move = onMove;
+      window.addEventListener("keydown", onKeyDown);
+      window.addEventListener("keyup", onKeyUp);
+    });
     onUnmounted(() => {
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('keyup', onKeyUp)
-      window.removeEventListener('resize', onResize)
-      window.removeEventListener('scroll', onScroll)
-    })
-    
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    });
+
+    watch(active, (value) => {
+      if (!value) {
+        showPopover.value = false;
+        currentStepIndex.value = -1;
+        currentStepEl.value = null;
+        prevEl.value = null;
+      }
+    });
+
     const onStart = (index = 0) => {
-      if (active.value) return
-      handleStepIndexChange(index)
-    }
+      if (active.value) return;
+      handleStepIndexChange(index);
+    };
 
     const onNext = () => {
-      if (!active.value || moving.value) return
-      const index = currentStepIndex.value + 1
-      if (index > props.steps.length-1) return
-      handleStepIndexChange(index)
-    }
+      if (!active.value || moving.value) return;
+      const index = currentStepIndex.value + 1;
+      if (index > steps.value.length - 1) return;
+      handleStepIndexChange(index);
+    };
 
     const onPrev = () => {
-      if (!active.value || moving.value) return
-      const index = currentStepIndex.value - 1
-      if (index < 0) return
-      handleStepIndexChange(index)
-    }
-  
+      if (!active.value || moving.value) return;
+      const index = currentStepIndex.value - 1;
+      if (index < 0) return;
+      handleStepIndexChange(index);
+    };
+
     const onEnd = () => {
-      if (!active.value || moving.value) return
-      const index = -1
-      handleStepIndexChange(index)
-    }
+      if (!active.value || moving.value) return;
+      const index = -1;
+      handleStepIndexChange(index);
+    };
 
     const onMove = (index = 0) => {
-      if (index === currentStepIndex.value || !active.value || moving.value) return
-      handleStepIndexChange(index)
-    }
-
-    const onUpdate = () => {
-      if (!active.value || moving.value) return
-      overlayUpdate()
-      nextTick(() => {
-        updatePopover.value = true
-      })
-    }
+      if (index === currentStepIndex.value || !active.value || moving.value)
+        return;
+      handleStepIndexChange(index);
+    };
 
     const handleStepIndexChange = (index) => {
-      const el = getHighlightEl(index, props.steps)
-      if (!el && index !== -1) return
-      showPopover.value = false
-      removeHighlight()
-      
-      updateCurrentStep(index, el)
-      
+      const el = getHighlightEl(index, steps.value);
+      if (!el && index !== -1) return;
+      showPopover.value = false;
+      removeHighlight();
+
+      updateCurrentStep(index, el);
+
       if (index === -1) {
-        overlayFadeOut(() => {
-          emit('afterEnd')
-        })
-        return
+        showPopover.value = false;
+        active.value = false;
+        vgtOverlay.value.overlayClose(() => {
+          emit("afterEnd");
+        });
+        return;
       }
 
       if (!isInView(el.getBoundingClientRect())) {
-        preventScroll = true
+        preventScroll.value = true;
         el.scrollIntoView({
-          block: 'center',
-        })
+          block: "center",
+        });
       }
 
       const done = () => {
-        preventScroll = false
-        addHighlight(el)
-        showPopover.value = true
+        moving.value = false;
+        preventScroll.value = false;
+        addHighlight(currentStepEl.value);
+        showPopover.value = true;
         nextTick(() => {
-          const focusableEls = getFocusableElements()
+          const focusableEls = getFocusableElements();
           if (focusableEls.length > 0) {
-            const firstFocusableEl = focusableEls[0]
-            firstFocusableEl.focus()
+            const firstFocusableEl = focusableEls[0];
+            firstFocusableEl.focus();
           }
-        })
-        emit(!prevEl.value ? 'afterStart' : 'afterMove')
-      }
-      !prevEl.value ? overlayFadeIn(done) : overlayMove(done)
-    }
+        });
+        emit(!prevEl.value ? "afterStart" : "afterMove");
+      };
+
+      active.value = true;
+      moving.value = true;
+      nextTick(() => {
+        !prevEl.value
+          ? vgtOverlay.value.overlayStart(currentStepEl.value, done)
+          : vgtOverlay.value.overlayMoveTo(currentStepEl.value, done);
+      });
+    };
 
     const updateCurrentStep = (index, el) => {
-      prevIndex.value = currentStepIndex.value
-      currentStepIndex.value = index
-      emit('update:stepIndex', currentStepIndex.value)
-      
+      currentStepIndex.value = index;
+      emit("update:stepIndex", currentStepIndex.value);
+
       if (index === -1) {
-        prevEl.value = null
-        currentStepEl.value = null
+        prevEl.value = null;
+        currentStepEl.value = null;
       } else {
-        prevEl.value = currentStepEl.value
-        currentStepEl.value = el
+        prevEl.value = currentStepEl.value;
+        currentStepEl.value = el;
       }
-    }
+    };
 
     const onKeyUp = (event) => {
-      if (!active.value || !props.allowKeyboardEvent) return
+      if (!active.value || !allowKeyboardEvent.value) return;
       switch (event.key) {
-      case 'Escape':
-        if (props.allowEscClose) {
-          onEnd()
-        }
-        break
-      case 'ArrowLeft':
-        onPrev()
-        break
-      case 'ArrowRight':
-        onNext()
-        break
+        case "Escape":
+          if (allowEscClose.value) {
+            onEnd();
+          }
+          break;
+        case "ArrowLeft":
+          onPrev();
+          break;
+        case "ArrowRight":
+          onNext();
+          break;
       }
-    }
+    };
 
     const onKeyDown = (event) => {
-      if (!active.value) return
-      const focusableEls = getFocusableElements()
+      if (!active.value) return;
+      const focusableEls = getFocusableElements();
       switch (event.key) {
-      case 'Tab':
-        if (focusableEls.length === 0)  {
-          event.preventDefault()
-        } else {
-          const firstFocusableEl = focusableEls[0]
-          const lastFocusableEl = focusableEls[focusableEls.length - 1]
-          if (event.shiftKey) {
-            if (document.activeElement === firstFocusableEl) {
-              lastFocusableEl.focus()
-              event.preventDefault()
-            }
+        case "Tab":
+          if (focusableEls.length === 0) {
+            event.preventDefault();
           } else {
-            if (document.activeElement === lastFocusableEl) {
-              firstFocusableEl.focus()
-              event.preventDefault()
+            const firstFocusableEl = focusableEls[0];
+            const lastFocusableEl = focusableEls[focusableEls.length - 1];
+            if (event.shiftKey) {
+              if (document.activeElement === firstFocusableEl) {
+                lastFocusableEl.focus();
+                event.preventDefault();
+              }
+            } else {
+              if (document.activeElement === lastFocusableEl) {
+                firstFocusableEl.focus();
+                event.preventDefault();
+              }
             }
           }
-        }
-        break
-      case 'ArrowLeft':
-      case 'ArrowRight':
-        if (props.allowKeyboardEvent) {
-          event.preventDefault()
-        }
-        break
+          break;
+        case "ArrowLeft":
+        case "ArrowRight":
+          if (allowKeyboardEvent.value) {
+            event.preventDefault();
+          }
+          break;
       }
-    }
+    };
 
     const onOverlayClick = () => {
-      if (!props.allowOverlayClose) return
-      onEnd()
-    }
+      if (!allowOverlayClose.value) return;
+      onEnd();
+    };
 
     const onCloseClick = () => {
-      onEnd()
-    }
-
-    const onResize = () => {
-      if (timeout) {
-        window.cancelAnimationFrame(timeout)
-      }
-      timeout = window.requestAnimationFrame(onUpdate)
-    }
-
-    const onScroll = () => {
-      if (preventScroll) return
-      if (timeout) {
-        window.cancelAnimationFrame(timeout)
-      }
-      timeout = window.requestAnimationFrame(onUpdate)
-    }
+      onEnd();
+    };
 
     const getFocusableElements = () => {
-      const selector = `button, [href], input, select, textarea, [tabindex]`
-      const focusableEls = [...vgtRef.value.querySelectorAll(selector)].filter((el) => {
-        if (parseInt(el.getAttribute('tabindex'), 10) < 0) {
-          return false
-        }
-        if (el.disabled) {
-          return false
-        }
-        while (el) {
-          if (
-            getComputedStyle(el).display === 'none' ||
-            getComputedStyle(el).visibility  === 'hidden'
-          ) {
-            return false
+      const selector = `button, [href], input, select, textarea, [tabindex]`;
+      const focusableEls = [...vgtRef.value.querySelectorAll(selector)].filter(
+        (el) => {
+          if (parseInt(el.getAttribute("tabindex"), 10) < 0) {
+            return false;
           }
-          el = el.parentElement
+          if (el.disabled) {
+            return false;
+          }
+          while (el) {
+            if (
+              getComputedStyle(el).display === "none" ||
+              getComputedStyle(el).visibility === "hidden"
+            ) {
+              return false;
+            }
+            el = el.parentElement;
+          }
+          return true;
         }
-        return true
-      })
-      return focusableEls
-    }
+      );
+      return focusableEls;
+    };
 
     return {
       vgtRef,
+      vgtOverlay,
+      active,
+      preventScroll,
       showPopover,
-      updatePopover,
       currentStepIndex,
       currentStep,
       isFirstStep,
       isLastStep,
-      active,
-      overlaysRef,
-      overlaysRect,
-      overlaysRectStyle,
-      overlayWrapperStyle,
+      currentTargetBounds,
       onStart,
       onNext,
       onPrev,
@@ -387,45 +397,47 @@ export default {
       onMove,
       onKeyUp,
       onOverlayClick,
-      onCloseClick,
-      onUpdate
-    }
+      onCloseClick,     
+    };
   },
-}
+};
 
-function useHightlight () {
-  const highlightClass = 'vgt__target--highlighted'
+function useHightlight() {
+  const highlightClass = "vgt__target--highlighted";
 
   const getHighlightEl = (index, steps) => {
-    if (typeof index !== 'number' || index < 0 || index > steps.length-1) return
-    const targetValue = steps[index].target
-    const el = document.querySelector(`${targetValue}`)
+    if (typeof index !== "number" || index < 0 || index > steps.length - 1)
+      return;
+    const targetValue = steps[index].target;
+    const el = document.querySelector(`${targetValue}`);
     if (!targetValue) {
-      console.warn(`[vue-guided-tour] : Target is required in step ${index}`)
-      return undefined
+      console.warn(`[vue-guided-tour] : Target is required in step ${index}`);
+      return undefined;
     } else if (!el) {
-      console.warn(`[vue-guided-tour] : Target to highlight "${targetValue}" not found`)
-      return undefined
+      console.warn(
+        `[vue-guided-tour] : Target to highlight "${targetValue}" not found`
+      );
+      return undefined;
     }
-    return el
-  }
+    return el;
+  };
 
   const addHighlight = (el) => {
-    el.classList.add(highlightClass)
-  }
+    el.classList.add(highlightClass);
+  };
 
   const removeHighlight = () => {
-    const allTargets = document.querySelectorAll(`.${highlightClass}`)
-    allTargets.forEach(target => {
-      target.classList.remove(highlightClass)
-    })
-  }
+    const allTargets = document.querySelectorAll(`.${highlightClass}`);
+    allTargets.forEach((target) => {
+      target.classList.remove(highlightClass);
+    });
+  };
 
   return {
     getHighlightEl,
     addHighlight,
-    removeHighlight
-  }
+    removeHighlight,
+  };
 }
 </script>
 
@@ -435,17 +447,8 @@ function useHightlight () {
   top: 0;
   left: 0;
 }
-.vgt--active {
+.vue-guided-tour.vgt--active {
   z-index: 99999 !important;
-}
-
-.vgt__overlay {
-  background-color: #000;
-  pointer-events: auto;
-}
-.vgt__overlay--center {
-  pointer-events: none !important;
-  background-color: transparent !important;
 }
 
 /*
@@ -491,7 +494,7 @@ function useHightlight () {
   border-radius: 4px;
   box-sizing: border-box;
   border: none;
-  transition: background-color .1s ease, color .1s ease;
+  transition: background-color 0.1s ease, color 0.1s ease;
 }
 .vgt__btn--primary {
   background-color: #3eaf7c;
@@ -506,7 +509,7 @@ function useHightlight () {
   color: #969faf;
 }
 .vgt__btn--secondary:hover {
-  color: #5B6474;
+  color: #5b6474;
 }
 
 .vgt__prev-btn {
@@ -533,9 +536,9 @@ function useHightlight () {
   padding: 0;
   margin: 0;
   color: #969faf;
-  transition: color .1s ease;
+  transition: color 0.1s ease;
 }
 .vgt__close-btn:hover {
-  color: #5B6474;
+  color: #5b6474;
 }
 </style>

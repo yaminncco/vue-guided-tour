@@ -1,29 +1,9 @@
-export const vgtProps = {
-  steps: {
-    type: Array,
-    required: true
-  },
-  stepIndex: {
-    type: Number,
-    default: -1
-  },
+const overlayOptions = {
   padding: {
     type: Number,
     default: 0
   },
-  pagination: {
-    type: Boolean,
-    default: true
-  },
-  closeBtn: {
-    type: Boolean,
-    default: true
-  },
   allowOverlayClose: {
-    type: Boolean,
-    default: true
-  },
-  allowKeyboardEvent: {
     type: Boolean,
     default: true
   },
@@ -37,18 +17,7 @@ export const vgtProps = {
   }
 }
 
-export const popoverProps = {
-  overlaysRef: {
-    type: Array,
-    required: true
-  },
-  updatePopover: {
-    type: Boolean,
-    default: false
-  }
-}
-
-export const popoverOptions = {
+const popoverOptions = {
   arrow: {
     type: Boolean,
     default: true
@@ -75,4 +44,45 @@ export const popoverOptions = {
     type: Boolean,
     default: true
   }
+}
+
+export const vgtProps = {
+  steps: {
+    type: Array,
+    required: true
+  },
+  stepIndex: {
+    type: Number,
+    default: -1
+  },
+  pagination: {
+    type: Boolean,
+    default: true
+  },
+  closeBtn: {
+    type: Boolean,
+    default: true
+  },
+  allowKeyboardEvent: {
+    type: Boolean,
+    default: true
+  },
+  ...popoverOptions,
+  ...overlayOptions
+}
+
+export const overlayProps = {
+  ...overlayOptions,
+  preventScroll: {
+    type: Boolean,
+    default: false
+  }
+}
+
+export const popoverProps = {
+  targetBounds: {
+    type: Object,
+    required: true
+  },
+  ...popoverOptions
 }
