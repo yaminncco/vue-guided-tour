@@ -31,23 +31,22 @@ import {
   reactive,
   computed,
   nextTick,
-  onMounted,
-  onUnmounted,
   onBeforeUpdate,
   toRefs,
+  watch,
 } from "vue";
 import { overlayProps } from "../propsValidation";
-import { getBoundingClientRect } from "../utils";
+import useEvent from "../use/useEvent";
 
 export default {
   name: "VueGuidedOverlay",
   props: {
     ...overlayProps,
   },
-  emits: ["overlay-click"],
+  emits: ["overlay-click", "update:rect"],
   setup(props, { emit }) {
     const {
-      padding,
+      rect,
       allowInteraction,
       allowOverlayClose,
       allowEscClose,
@@ -56,48 +55,35 @@ export default {
     const active = ref(false);
     const moving = ref(false);
 
-    const currentTarget = ref(null);
-    const prevTarget = ref(null);
-    const currentTargetBounds = reactive({
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-      bottom: 0,
-      right: 0,
-    });
-    const prevTargetBounds = reactive({
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-      bottom: 0,
-      right: 0,
-    });
+    const rectDefault = { top: 0, left: 0, width: 0, height: 0 };
+    const currentRect = reactive({ ...rectDefault });
+    const prevRect = reactive({ ...rectDefault });
+
     const overlayWrapper = reactive({
       width: 0,
       height: 0,
     });
     const overlaysRef = ref([]);
-    const overlayRectDefault = {};
-    const keys = ["top", "left", "bottom", "right", "center"];
-    keys.forEach((key) => {
-      overlayRectDefault[key] = {
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-        scaleX: 1,
-        scaleY: 1,
-      };
-    });
-    const overlaysRect = reactive(overlayRectDefault);
+    const overlayRectDefault = {
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+      scaleX: 1,
+      scaleY: 1,
+    };
+    const overlaysRect = reactive(
+      Object.fromEntries(
+        ["top", "left", "bottom", "right", "center"].map((key) => [
+          key,
+          { ...overlayRectDefault },
+        ])
+      )
+    );
 
     const fadeDuration = 300;
     const moveDuration = 450;
     const moveEase = "cubic-bezier(.65,.05,.36,1)";
-
-    let timeout = null;
 
     const overlayWrapperStyle = computed(() => {
       return {
@@ -144,6 +130,15 @@ export default {
         };
       };
     });
+
+    const updateRect = (rect, { top = 0, left = 0, width = 0, height = 0 }) => {
+      rect.top = top;
+      rect.left = left;
+      rect.width = width;
+      rect.height = height;
+      rect.bottom = height + top;
+      rect.right = width + left;
+    };
 
     const getOverlayRect = ({ top, left, right, bottom, width, height }) => {
       const w = overlayWrapper.width;
@@ -239,7 +234,7 @@ export default {
     };
 
     const updateOverlaysRect = () => {
-      const currentOverlayRect = getOverlayRect(currentTargetBounds);
+      const currentOverlayRect = getOverlayRect(currentRect);
       for (const overlayKey in overlaysRect) {
         const overlay = overlaysRect[overlayKey];
         overlay.width = currentOverlayRect[overlayKey].width;
@@ -252,8 +247,8 @@ export default {
     };
 
     const invertOverlaysRect = () => {
-      const prevOverlayRect = getOverlayRect(prevTargetBounds);
-      const currentOverlayRect = getOverlayRect(currentTargetBounds);
+      const prevOverlayRect = getOverlayRect(prevRect);
+      const currentOverlayRect = getOverlayRect(currentRect);
 
       for (const overlayKey in overlaysRect) {
         const overlay = overlaysRect[overlayKey];
@@ -286,7 +281,8 @@ export default {
 
       updateOverlaysRect();
       setTimeout(() => {
-        updateCurrentBounds();
+        updateRect(currentRect, rect.value);
+        updateOverlaysRect();
         for (const overlayKey in overlaysRect) {
           overlaysRef.value[overlayKey].style.transition = ``;
         }
@@ -302,7 +298,7 @@ export default {
       resetOverlayWrapper();
       nextTick(() => {
         updateOverlayWrapper();
-        updateCurrentBounds();
+        updateRect(currentRect, rect.value);
         updateOverlaysRect();
       });
     };
@@ -332,7 +328,10 @@ export default {
       resetOverlayWrapper();
       nextTick(() => {
         updateOverlayWrapper();
-        updateCurrentBounds();
+        updateRect(
+          prevRect,
+          overlaysRef.value["center"].getBoundingClientRect()
+        );
         updateOverlaysRect();
         invertOverlaysRect();
         setTimeout(() => {
@@ -341,113 +340,45 @@ export default {
       });
     };
 
-    const overlayStart = (target, callback) => {
+    const overlayStart = (callback) => {
       if (active.value) return;
-      handleTargetUpdate(target, callback);
+      handleTargetUpdate(rect.value, callback);
     };
 
     const overlayClose = (callback) => {
       if (!active.value || moving.value) return;
-      handleTargetUpdate(null, callback);
+      handleTargetUpdate(undefined, callback);
     };
 
-    const overlayMoveTo = (target, callback) => {
-      if (!active.value || moving.value || !target) return;
-      handleTargetUpdate(target, callback);
+    const overlayMoveTo = (newRect, callback) => {
+      if (!active.value || moving.value || !newRect) return;
+      emit("update:rect", newRect);
+      handleTargetUpdate(newRect, callback, true);
     };
 
-    const handleTargetUpdate = (target, callback) => {
-      updateCurrentTarget(target);
-
-      if (target === null) {
+    const handleTargetUpdate = (newRect, callback, move = false) => {
+      if (!newRect) {
         active.value = false;
         overlayFadeOut(callback);
         return;
       }
 
+      updateRect(prevRect, currentRect);
+      updateRect(currentRect, newRect);
+
       active.value = true;
-      !prevTarget.value ? overlayFadeIn(callback) : overlayMove(callback);
+      move ? overlayMove(callback) : overlayFadeIn(callback);
     };
 
-    const updateCurrentTarget = (target) => {
-      if (!target) {
-        let top, left, right, bottom, width, height;
-        top = left = right = bottom = width = height = 0;
-        const newBounds = { width, height, top, left, right, bottom };
-
-        prevTarget.value = null;
-        currentTarget.value = null;
-        updateBounds(prevTargetBounds, newBounds);
-        updateBounds(currentTargetBounds, newBounds);
-      } else {
-        const newBounds = getBoundingClientRect(target, padding.value);
-        prevTarget.value = currentTarget.value;
-        currentTarget.value = target;
-        updateBounds(prevTargetBounds, currentTargetBounds);
-        updateBounds(currentTargetBounds, newBounds);
-      }
+    const onUpdate = () => {
+      if (!active.value || moving.value) return;
+      if (preventScroll.value) return;
+      overlayUpdate();
     };
-
-    const updateCurrentBounds = () => {
-      const newBounds = getBoundingClientRect(
-        currentTarget.value,
-        padding.value
-      );
-      if (prevTarget.value) {
-        let newPrevBounds = getBoundingClientRect(prevTarget.value);
-        const prevPadding = (prevTargetBounds.width - newPrevBounds.width) / 2;
-        newPrevBounds = getBoundingClientRect(prevTarget.value, prevPadding);
-        updateBounds(prevTargetBounds, newPrevBounds);
-      }
-      updateBounds(currentTargetBounds, newBounds);
-    };
-
-    const updateBounds = (
-      bounds,
-      { width, height, top, left, right, bottom }
-    ) => {
-      bounds.width = width;
-      bounds.height = height;
-      bounds.top = top;
-      bounds.left = left;
-      bounds.right = right;
-      bounds.bottom = bottom;
-    };
-
-    onMounted(() => {
-      window.addEventListener("resize", onResize);
-      window.addEventListener("scroll", onScroll);
-      window.addEventListener("keyup", onKeyUp);
-    });
-    onUnmounted(() => {
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("keyup", onKeyUp);
-    });
 
     onBeforeUpdate(() => {
       overlaysRef.value = [];
     });
-
-    const onUpdate = () => {
-      if (!active.value || moving.value) return;
-      overlayUpdate();
-    };
-
-    const onResize = () => {
-      if (timeout) {
-        window.cancelAnimationFrame(timeout);
-      }
-      timeout = window.requestAnimationFrame(onUpdate);
-    };
-
-    const onScroll = () => {
-      if (preventScroll.value) return;
-      if (timeout) {
-        window.cancelAnimationFrame(timeout);
-      }
-      timeout = window.requestAnimationFrame(onUpdate);
-    };
 
     const onOverlayClick = () => {
       if (!allowOverlayClose.value) return;
@@ -461,6 +392,21 @@ export default {
       overlayClose();
     };
 
+    watch(
+      () => rect.value,
+      () => {
+        nextTick(() => {
+          onUpdate();
+        })
+      },
+      {
+        deep: true,
+      }
+    );
+    useEvent(window, "scroll", onUpdate);
+    useEvent(window, "resize", onUpdate);
+    useEvent(window, "keyup", onKeyUp);
+
     return {
       active,
       overlaysRef,
@@ -471,7 +417,6 @@ export default {
       overlayStart,
       overlayClose,
       overlayMoveTo,
-      currentTargetBounds,
     };
   },
 };

@@ -1,88 +1,92 @@
 const overlayOptions = {
-  padding: {
-    type: Number,
-    default: 0
-  },
   allowOverlayClose: {
     type: Boolean,
-    default: true
+    default: true,
   },
   allowEscClose: {
     type: Boolean,
-    default: true
+    default: true,
   },
   allowInteraction: {
     type: Boolean,
-    default: true
-  }
-}
+    default: true,
+  },
+};
 
 const popoverOptions = {
   arrow: {
     type: Boolean,
-    default: true
+    default: true,
   },
   offset: {
     type: Number,
-    default: 0
+    default: 0,
   },
   position: {
     type: String,
-    default: 'bottom',
+    default: "bottom",
     validator: function (value) {
-      return ['top', 'left', 'right', 'bottom'].indexOf(value) !== -1
-    }
+      return ["top", "left", "right", "bottom"].indexOf(value) !== -1;
+    },
   },
   placement: {
     type: String,
-    default: 'start',
+    default: "start",
     validator: function (value) {
-      return ['start', 'center', 'end'].indexOf(value) !== -1
-    }
+      return ["start", "center", "end"].indexOf(value) !== -1;
+    },
   },
   autoAdjust: {
     type: Boolean,
-    default: true
-  }
-}
+    default: true,
+  },
+};
 
 export const vgtProps = {
   steps: {
     type: Array,
-    required: true
+    required: true,
   },
   stepIndex: {
     type: Number,
-    default: -1
+    default: -1,
+  },
+  padding: {
+    type: Number,
+    default: 0,
   },
   pagination: {
     type: Boolean,
-    default: true
+    default: true,
   },
   closeBtn: {
     type: Boolean,
-    default: true
+    default: true,
   },
   allowKeyboardEvent: {
     type: Boolean,
-    default: true
+    default: true,
   },
   ...popoverOptions,
-  ...overlayOptions
-}
+  ...overlayOptions,
+};
 
 export const overlayProps = {
   ...overlayOptions,
+  rect: {
+    type: Object,
+    default: () => {},
+  },
   preventScroll: {
     type: Boolean,
-    default: false
-  }
-}
+    default: false,
+  },
+};
 
 export const popoverProps = {
-  targetBounds: {
+  rect: {
     type: Object,
-    required: true
+    required: true,
   },
-  ...popoverOptions
-}
+  ...popoverOptions,
+};

@@ -7,7 +7,7 @@
     >
       <vgt-overlay
         ref="vgtOverlay"
-        :padding="padding"
+        :rect="currentStepRect"
         :allow-overlay-close="allowOverlayClose"
         :allow-esc-close="allowEscClose"
         :allow-interaction="allowInteraction"
@@ -23,7 +23,7 @@
             $slots.content
           )
         "
-        :target-bounds="currentTargetBounds"
+        :rect="currentStepRect"
         :arrow="arrow"
         :offset="offset"
         :position="position"
@@ -110,13 +110,17 @@ import {
   ref,
   computed,
   onMounted,
-  onUnmounted,
   inject,
   nextTick,
   watch,
   toRefs,
 } from "vue";
-import { isInView } from "../utils";
+import {
+  isInView,
+  getBoundingWithPadding,
+} from "../use/utils";
+import useRect from "../use/useRect";
+import useEvent from "../use/useEvent";
 import { vgtProps } from "../propsValidation";
 
 export default {
@@ -140,6 +144,8 @@ export default {
     const vgtRef = ref(null);
     const vgtOverlay = ref(null);
 
+    const $vgt = inject("$vgt");
+
     const showPopover = ref(false);
 
     const currentStepIndex = ref(-1);
@@ -152,20 +158,30 @@ export default {
     const moving = ref(false);
     const preventScroll = ref(false);
 
-    const $vgt = inject("$vgt");
+    const { getHighlightEl, addHighlight, removeHighlight } = useHightlight();
+
+    const { rect } = useRect(currentStepEl);
+    const currentStepRect = computed(() => {
+      if (!currentStepEl.value) return rect;
+      const padding = currentStep.value.padding || props.padding;
+      return getBoundingWithPadding(rect, padding);
+    });
 
     const currentStep = computed(() => {
       if (currentStepIndex.value === -1) return {};
       const stepObj = steps.value[currentStepIndex.value];
       return {
         ...stepObj,
+        // popover options
         popover: {
           ...stepObj.popover,
         },
+        /*
+        // overlay options
         overlay: {
-          padding: stepObj.padding,
-          // ...stepObj.overlay
+          ...stepObj.overlay
         },
+        */
       };
     });
     const isFirstStep = computed(() => {
@@ -175,24 +191,12 @@ export default {
       return currentStepIndex.value === steps.value.length - 1;
     });
 
-    const currentTargetBounds = computed(() => {
-      return vgtOverlay.value.currentTargetBounds;
-    });
-
-    const { getHighlightEl, addHighlight, removeHighlight } = useHightlight();
-
     onMounted(() => {
       $vgt.start = onStart;
       $vgt.next = onNext;
       $vgt.prev = onPrev;
       $vgt.end = onEnd;
       $vgt.move = onMove;
-      window.addEventListener("keydown", onKeyDown);
-      window.addEventListener("keyup", onKeyUp);
-    });
-    onUnmounted(() => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
     });
 
     watch(active, (value) => {
@@ -259,6 +263,10 @@ export default {
         });
       }
 
+      playAnimation();
+    }
+
+    const playAnimation = () => {
       const done = () => {
         moving.value = false;
         preventScroll.value = false;
@@ -277,9 +285,16 @@ export default {
       active.value = true;
       moving.value = true;
       nextTick(() => {
-        !prevEl.value
-          ? vgtOverlay.value.overlayStart(currentStepEl.value, done)
-          : vgtOverlay.value.overlayMoveTo(currentStepEl.value, done);
+        if (!prevEl.value) {
+          vgtOverlay.value.overlayStart(done);
+        } else {
+          const padding = currentStep.value.padding || props.padding;
+          const newRect = getBoundingWithPadding(
+            currentStepEl.value.getBoundingClientRect(),
+            padding
+          );
+          vgtOverlay.value.overlayMoveTo(newRect, done);
+        }
       });
     };
 
@@ -379,6 +394,9 @@ export default {
       return focusableEls;
     };
 
+    useEvent(window, "keyup", onKeyUp);
+    useEvent(window, "keydown", onKeyDown);
+
     return {
       vgtRef,
       vgtOverlay,
@@ -386,10 +404,10 @@ export default {
       preventScroll,
       showPopover,
       currentStepIndex,
+      currentStepRect,
       currentStep,
       isFirstStep,
       isLastStep,
-      currentTargetBounds,
       onStart,
       onNext,
       onPrev,
@@ -397,7 +415,7 @@ export default {
       onMove,
       onKeyUp,
       onOverlayClick,
-      onCloseClick,     
+      onCloseClick,
     };
   },
 };

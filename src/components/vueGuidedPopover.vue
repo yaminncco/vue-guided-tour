@@ -18,7 +18,7 @@
 
 <script>
 import { ref, computed, onMounted, nextTick, watch, toRefs } from "vue";
-import { getBoundingClientRect, isPositionVertical, isOutView } from "../utils";
+import { isPositionVertical, isOutView } from "../use/utils";
 import { popoverProps } from "../propsValidation";
 
 export default {
@@ -29,7 +29,7 @@ export default {
   },
   setup(props) {
     const popoverRef = ref(null);
-    const { targetBounds, position } = toRefs(props);
+    const { rect, position } = toRefs(props);
     const currentPosition = ref(position.value);
     const x = ref(0);
     const y = ref(0);
@@ -46,7 +46,7 @@ export default {
       y,
       popoverRef,
       currentPosition,
-      targetBounds
+      rect
     );
 
     onMounted(() => {
@@ -54,7 +54,7 @@ export default {
     });
 
     watch(
-      () => targetBounds.value,
+      () => rect.value,
       () => {
         nextTick(() => {
           initPopover();
@@ -87,37 +87,37 @@ export default {
 
       switch (position) {
         case "bottom":
-          tx = targetBounds.value.left;
-          ty = targetBounds.value.bottom + offset + arrowSize / 2;
+          tx = rect.value.left;
+          ty = rect.value.bottom + offset + arrowSize / 2;
           break;
 
         case "top":
-          tx = targetBounds.value.left;
-          ty = targetBounds.value.top - popoverHeight - offset - arrowSize / 2;
+          tx = rect.value.left;
+          ty = rect.value.top - popoverHeight - offset - arrowSize / 2;
           break;
 
         case "right":
-          tx = targetBounds.value.right + offset + arrowSize / 2;
-          ty = targetBounds.value.top;
+          tx = rect.value.right + offset + arrowSize / 2;
+          ty = rect.value.top;
           break;
 
         case "left":
-          tx = targetBounds.value.left - popoverWidth - offset - arrowSize / 2;
-          ty = targetBounds.value.top;
+          tx = rect.value.left - popoverWidth - offset - arrowSize / 2;
+          ty = rect.value.top;
           break;
       }
 
       switch (placement) {
         case "end":
           isPositionVertical(position)
-            ? (tx = tx - popoverWidth + targetBounds.value.width)
-            : (ty = ty - popoverHeight + targetBounds.value.height);
+            ? (tx = tx - popoverWidth + rect.value.width)
+            : (ty = ty - popoverHeight + rect.value.height);
           break;
 
         case "center":
           isPositionVertical(position)
-            ? (tx = tx - popoverWidth / 2 + targetBounds.value.width / 2)
-            : (ty = ty - popoverHeight / 2 + targetBounds.value.height / 2);
+            ? (tx = tx - popoverWidth / 2 + rect.value.width / 2)
+            : (ty = ty - popoverHeight / 2 + rect.value.height / 2);
           break;
       }
 
@@ -140,18 +140,16 @@ export default {
       if (!props.autoAdjust) return;
       const { innerWidth: w, innerHeight: h } = window;
 
-      const { height, width, ...popoverRect } = getBoundingClientRect(
-        popoverRef.value
-      );
+      const popoverRect = popoverRef.value.getBoundingClientRect();
       const isPopoverOutView = isOutView(popoverRect);
       const arrowSize = arrowRect.value.size;
       const arrowOffset = arrowRect.value.offset;
 
       const outOffset = arrowSize + arrowOffset * 2;
-      const hTop = targetBounds.value.top + outOffset;
-      const hBottom = targetBounds.value.bottom - outOffset;
-      const hLeft = targetBounds.value.left + outOffset;
-      const hRight = targetBounds.value.right - outOffset;
+      const hTop = rect.value.top + outOffset;
+      const hBottom = rect.value.bottom - outOffset;
+      const hLeft = rect.value.left + outOffset;
+      const hRight = rect.value.right - outOffset;
 
       const hIsOutView = isOutView({
         top: hBottom,
@@ -166,21 +164,20 @@ export default {
         if (isPopoverOutView.left) {
           x.value = !hIsOutX ? 0 : hRight;
         } else if (isPopoverOutView.right) {
-          x.value = !hIsOutX ? w - width : -width + hLeft;
+          x.value = !hIsOutX ? w - popoverRect.width : -popoverRect.width + hLeft;
         }
       } else {
         if (isPopoverOutView.top) {
           y.value = !hIsOutY ? 0 : hBottom;
         } else if (isPopoverOutView.bottom) {
-          y.value = !hIsOutY ? h - height : -height + hTop;
+          y.value = !hIsOutY ? h - popoverRect.height : -popoverRect.height + hTop;
         }
       }
     };
 
     const checkAvailableSpace = (position) => {
       const size = getSpaceSize()[position];
-      const { height: popoverHeight, width: popoverWidth } =
-        getBoundingClientRect(popoverRef.value);
+      const { height: popoverHeight, width: popoverWidth } = popoverRef.value.getBoundingClientRect();
       const popoverSize = isPositionVertical(position)
         ? popoverHeight
         : popoverWidth;
@@ -193,10 +190,10 @@ export default {
     const getSpaceSize = () => {
       const { innerWidth: w, innerHeight: h } = window;
       return {
-        bottom: h - targetBounds.value.bottom,
-        top: targetBounds.value.top,
-        right: w - targetBounds.value.right,
-        left: targetBounds.value.left,
+        bottom: h - rect.value.bottom,
+        top: rect.value.top,
+        right: w - rect.value.right,
+        left: rect.value.left,
       };
     };
 
@@ -214,7 +211,7 @@ export default {
     };
 
     return {
-      targetBounds,
+      rect,
       popoverRef,
       currentPosition,
       popoverStyle,
@@ -229,7 +226,7 @@ function useArrow(
   popoverY,
   popoverRef,
   position,
-  targetBounds
+  rect
 ) {
   const x = ref(0);
   const y = ref(0);
@@ -253,8 +250,7 @@ function useArrow(
 
   const initArrowPositionCoord = () => {
     if (!props.arrow) return;
-    const { height: popoverHeight, width: popoverWidth } =
-      getBoundingClientRect(popoverRef.value);
+    const { height: popoverHeight, width: popoverWidth } = popoverRef.value.getBoundingClientRect();
 
     const placement = props.placement;
     const arrowSize = arrowRect.value.size;
@@ -267,30 +263,30 @@ function useArrow(
       case "center":
         isPositionVertical(position.value)
           ? (tx =
-              targetBounds.value.left -
+              rect.value.left -
               popoverX.value +
-              targetBounds.value.width / 2 -
+              rect.value.width / 2 -
               arrowSize / 2)
           : (ty =
-              targetBounds.value.top -
+              rect.value.top -
               popoverY.value +
-              targetBounds.value.height / 2 -
+              rect.value.height / 2 -
               arrowSize / 2);
         break;
       case "start":
         isPositionVertical(position.value)
-          ? (tx = targetBounds.value.left - popoverX.value + arrowOffset)
-          : (ty = targetBounds.value.top - popoverY.value + arrowOffset);
+          ? (tx = rect.value.left - popoverX.value + arrowOffset)
+          : (ty = rect.value.top - popoverY.value + arrowOffset);
         break;
       case "end":
         isPositionVertical(position.value)
           ? (tx =
-              targetBounds.value.right -
+              rect.value.right -
               popoverX.value -
               arrowSize -
               arrowOffset)
           : (ty =
-              targetBounds.value.bottom -
+              rect.value.bottom -
               popoverY.value -
               arrowSize -
               arrowOffset);
