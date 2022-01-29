@@ -82,7 +82,7 @@ export default {
     );
 
     const fadeDuration = 300;
-    const moveDuration = 450;
+    const moveDuration = 300;
     const moveEase = "cubic-bezier(.65,.05,.36,1)";
 
     const overlayWrapperStyle = computed(() => {
