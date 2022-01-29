@@ -11,7 +11,6 @@
         :allow-overlay-close="allowOverlayClose"
         :allow-esc-close="allowEscClose"
         :allow-interaction="allowInteraction"
-        :prevent-scroll="preventScroll"
         v-bind="{ ...currentStep.overlay }"
         @overlay-click="onOverlayClick"
       />
@@ -156,13 +155,11 @@ export default {
 
     const active = ref(false);
     const moving = ref(false);
-    const preventScroll = ref(false);
 
     const { getHighlightEl, addHighlight, removeHighlight } = useHightlight();
 
     const { rect } = useRect(currentStepEl);
     const currentStepRect = computed(() => {
-      if (!currentStepEl.value) return rect;
       const padding = currentStep.value.padding || props.padding;
       return getBoundingWithPadding(rect, padding);
     });
@@ -242,36 +239,41 @@ export default {
     const handleStepIndexChange = (index) => {
       const el = getHighlightEl(index, steps.value);
       if (!el && index !== -1) return;
-      showPopover.value = false;
-      removeHighlight();
 
-      updateCurrentStep(index, el);
+      const startTour = () => {
+        active.value = true;
+        moving.value = true;
+        vgtOverlay.value.overlayStart(done);
+      }
 
-      if (index === -1) {
+      const moveTour = () => {
+        active.value = true;
+        moving.value = true;
+        const padding = currentStep.value.padding || props.padding;
+        const newRect = getBoundingWithPadding(
+          currentStepEl.value.getBoundingClientRect(),
+          padding
+        );
+        vgtOverlay.value.overlayMoveTo(newRect, done);
+      }
+
+      const endTour = () => {
         showPopover.value = false;
+        removeHighlight();
         active.value = false;
         vgtOverlay.value.overlayClose(() => {
           emit("afterEnd");
         });
-        return;
-      }
+      };
 
-      if (!isInView(el.getBoundingClientRect())) {
-        preventScroll.value = true;
-        el.scrollIntoView({
-          block: "center",
-        });
-      }
-
-      playAnimation();
-    }
-
-    const playAnimation = () => {
       const done = () => {
-        moving.value = false;
-        preventScroll.value = false;
-        addHighlight(currentStepEl.value);
+        const inView = isInView(el.getBoundingClientRect());
+        if (!inView) {
+          el.scrollIntoView({ block: "center" });
+        }
         showPopover.value = true;
+        addHighlight(currentStepEl.value);
+        moving.value = false;
         nextTick(() => {
           const focusableEls = getFocusableElements();
           if (focusableEls.length > 0) {
@@ -279,23 +281,20 @@ export default {
             firstFocusableEl.focus();
           }
         });
-        emit(!prevEl.value ? "afterStart" : "afterMove");
+        emit(!move ? "afterStart" : "afterMove");
       };
-
-      active.value = true;
-      moving.value = true;
-      nextTick(() => {
-        if (!prevEl.value) {
-          vgtOverlay.value.overlayStart(done);
-        } else {
-          const padding = currentStep.value.padding || props.padding;
-          const newRect = getBoundingWithPadding(
-            currentStepEl.value.getBoundingClientRect(),
-            padding
-          );
-          vgtOverlay.value.overlayMoveTo(newRect, done);
-        }
-      });
+      
+      showPopover.value = false;
+      removeHighlight();
+      
+      updateCurrentStep(index, el);
+      const move = !!prevEl.value;
+      
+      if (index === -1) {
+        endTour();
+        return;
+      }
+      move ? moveTour() : startTour();
     };
 
     const updateCurrentStep = (index, el) => {
@@ -401,7 +400,6 @@ export default {
       vgtRef,
       vgtOverlay,
       active,
-      preventScroll,
       showPopover,
       currentStepIndex,
       currentStepRect,

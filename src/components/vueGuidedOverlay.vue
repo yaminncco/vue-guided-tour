@@ -37,6 +37,7 @@ import {
 } from "vue";
 import { overlayProps } from "../propsValidation";
 import useEvent from "../use/useEvent";
+import { rafThrottle } from "../use/utils";
 
 export default {
   name: "VueGuidedOverlay",
@@ -50,7 +51,6 @@ export default {
       allowInteraction,
       allowOverlayClose,
       allowEscClose,
-      preventScroll,
     } = toRefs(props);
     const active = ref(false);
     const moving = ref(false);
@@ -370,11 +370,7 @@ export default {
       move ? overlayMove(callback) : overlayFadeIn(callback);
     };
 
-    const onUpdate = () => {
-      if (!active.value || moving.value) return;
-      if (preventScroll.value) return;
-      overlayUpdate();
-    };
+    const onUpdate = rafThrottle(overlayUpdate);
 
     onBeforeUpdate(() => {
       overlaysRef.value = [];
@@ -395,9 +391,7 @@ export default {
     watch(
       () => rect.value,
       () => {
-        nextTick(() => {
-          onUpdate();
-        })
+        onUpdate();
       },
       {
         deep: true,

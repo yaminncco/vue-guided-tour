@@ -27,3 +27,16 @@ export const isOutView = ({ top, left, bottom, right }) => {
 export const isPositionVertical = (position) => {
   return position === "top" || position === "bottom";
 };
+
+export const rafThrottle = (fn) => {
+  let rafId;
+  let lastArgs;
+  return (...args) => {
+    lastArgs = args;
+    if (rafId) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      fn(...lastArgs);
+    });
+  };
+};

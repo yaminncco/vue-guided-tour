@@ -72,15 +72,11 @@ export const vgtProps = {
 };
 
 export const overlayProps = {
-  ...overlayOptions,
   rect: {
     type: Object,
     default: () => {},
   },
-  preventScroll: {
-    type: Boolean,
-    default: false,
-  },
+  ...overlayOptions,
 };
 
 export const popoverProps = {

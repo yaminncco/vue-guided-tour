@@ -1,6 +1,7 @@
 import { watch, reactive, unref } from "vue";
 import useEvent from "./useEvent";
 import useObserver from "./useObserver";
+import { rafThrottle } from "./utils";
 
 export default function useRect(target) {
   const rect = reactive({
@@ -30,16 +31,17 @@ export default function useRect(target) {
     }
   };
 
+  const rafUpdate = rafThrottle(update);
   watch(
     () => unref(target),
     () => {
       update();
     },
-    { immediate: true, flush: "post" }
+    { immediate: true }
   );
-
-  useEvent(window, "scroll", update);
-  useObserver(target, update);
+  useEvent(window, "resize", rafUpdate);
+  useEvent(window, "scroll", rafUpdate);
+  useObserver(target, rafUpdate);
 
   return {
     rect,

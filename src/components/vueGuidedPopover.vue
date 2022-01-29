@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, nextTick, watch, toRefs } from "vue";
+import { ref, computed, nextTick, watch, toRefs } from "vue";
 import { isPositionVertical, isOutView } from "../use/utils";
 import { popoverProps } from "../propsValidation";
 
@@ -49,20 +49,16 @@ export default {
       rect
     );
 
-    onMounted(() => {
-      initPopover();
-    });
-
     watch(
       () => rect.value,
       () => {
         nextTick(() => {
           initPopover();
-        });
+        })
       },
-      { deep: true }
+      { deep: true, immediate: true }
     );
-
+  
     const initPopover = () => {
       if (!popoverRef.value) return;
       adjustCurrentPosition();
@@ -164,20 +160,25 @@ export default {
         if (isPopoverOutView.left) {
           x.value = !hIsOutX ? 0 : hRight;
         } else if (isPopoverOutView.right) {
-          x.value = !hIsOutX ? w - popoverRect.width : -popoverRect.width + hLeft;
+          x.value = !hIsOutX
+            ? w - popoverRect.width
+            : -popoverRect.width + hLeft;
         }
       } else {
         if (isPopoverOutView.top) {
           y.value = !hIsOutY ? 0 : hBottom;
         } else if (isPopoverOutView.bottom) {
-          y.value = !hIsOutY ? h - popoverRect.height : -popoverRect.height + hTop;
+          y.value = !hIsOutY
+            ? h - popoverRect.height
+            : -popoverRect.height + hTop;
         }
       }
     };
 
     const checkAvailableSpace = (position) => {
       const size = getSpaceSize()[position];
-      const { height: popoverHeight, width: popoverWidth } = popoverRef.value.getBoundingClientRect();
+      const { height: popoverHeight, width: popoverWidth } =
+        popoverRef.value.getBoundingClientRect();
       const popoverSize = isPositionVertical(position)
         ? popoverHeight
         : popoverWidth;
@@ -220,14 +221,7 @@ export default {
   },
 };
 
-function useArrow(
-  props,
-  popoverX,
-  popoverY,
-  popoverRef,
-  position,
-  rect
-) {
+function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
   const x = ref(0);
   const y = ref(0);
 
@@ -250,7 +244,8 @@ function useArrow(
 
   const initArrowPositionCoord = () => {
     if (!props.arrow) return;
-    const { height: popoverHeight, width: popoverWidth } = popoverRef.value.getBoundingClientRect();
+    const { height: popoverHeight, width: popoverWidth } =
+      popoverRef.value.getBoundingClientRect();
 
     const placement = props.placement;
     const arrowSize = arrowRect.value.size;
@@ -280,16 +275,8 @@ function useArrow(
         break;
       case "end":
         isPositionVertical(position.value)
-          ? (tx =
-              rect.value.right -
-              popoverX.value -
-              arrowSize -
-              arrowOffset)
-          : (ty =
-              rect.value.bottom -
-              popoverY.value -
-              arrowSize -
-              arrowOffset);
+          ? (tx = rect.value.right - popoverX.value - arrowSize - arrowOffset)
+          : (ty = rect.value.bottom - popoverY.value - arrowSize - arrowOffset);
         break;
     }
 
