@@ -21,6 +21,7 @@
 import { ref, computed, nextTick, watch, toRefs } from "vue";
 import { isPositionVertical, isOutView } from "../use/utils";
 import { popoverProps } from "../propsValidation";
+import useObserver from "../use/useObserver";
 
 export default {
   name: "VueGuidedPopover",
@@ -69,6 +70,8 @@ export default {
         initArrowPositionCoord();
       });
     };
+
+    useObserver(popoverRef, initPopover);
 
     const initPositionCoord = () => {
       const { height: popoverHeight, width: popoverWidth } =
