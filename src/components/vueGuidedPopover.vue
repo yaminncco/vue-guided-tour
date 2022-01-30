@@ -88,7 +88,7 @@ export default {
       switch (position) {
         case "bottom":
           tx = rect.value.left;
-          ty = rect.value.bottom + offset + arrowSize / 2;
+          ty = (rect.value.height + rect.value.top) + offset + arrowSize / 2;
           break;
 
         case "top":
@@ -97,7 +97,7 @@ export default {
           break;
 
         case "right":
-          tx = rect.value.right + offset + arrowSize / 2;
+          tx = (rect.value.width + rect.value.left) + offset + arrowSize / 2;
           ty = rect.value.top;
           break;
 
@@ -147,9 +147,9 @@ export default {
 
       const outOffset = arrowSize + arrowOffset * 2;
       const hTop = rect.value.top + outOffset;
-      const hBottom = rect.value.bottom - outOffset;
+      const hBottom = (rect.value.height + rect.value.top) - outOffset;
       const hLeft = rect.value.left + outOffset;
-      const hRight = rect.value.right - outOffset;
+      const hRight = (rect.value.width + rect.value.left) - outOffset;
 
       const hIsOutView = isOutView({
         top: hBottom,
@@ -195,9 +195,9 @@ export default {
     const getSpaceSize = () => {
       const { innerWidth: w, innerHeight: h } = window;
       return {
-        bottom: h - rect.value.bottom,
+        bottom: h - (rect.value.height + rect.value.top),
         top: rect.value.top,
-        right: w - rect.value.right,
+        right: w - (rect.value.width + rect.value.left),
         left: rect.value.left,
       };
     };
@@ -279,8 +279,8 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
         break;
       case "end":
         isPositionVertical(position.value)
-          ? (tx = rect.value.right - popoverX.value - arrowSize - arrowOffset)
-          : (ty = rect.value.bottom - popoverY.value - arrowSize - arrowOffset);
+          ? (tx = (rect.value.width + rect.value.left) - popoverX.value - arrowSize - arrowOffset)
+          : (ty = (rect.value.height + rect.value.top) - popoverY.value - arrowSize - arrowOffset);
         break;
     }
 
@@ -313,6 +313,8 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
 <style>
 .vue-guided-popover {
   position: fixed;
+  top: 0;
+  left: 0;
   background: #fff;
   margin: 0;
   padding: 15px;
