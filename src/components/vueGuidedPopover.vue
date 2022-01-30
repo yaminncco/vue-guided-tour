@@ -4,6 +4,7 @@
     role="dialog"
     class="vue-guided-popover"
     :style="popoverStyle"
+    v-bind="$attrs.attrs"
   >
     <div
       v-if="arrow"

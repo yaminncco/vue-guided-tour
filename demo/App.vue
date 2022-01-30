@@ -30,7 +30,7 @@
   >
     <!--
     <template #content="{ stepIndex }">
-      <div>
+      <div id="hello-world-title">
         step {{ stepIndex }}
       </div>
     </template>
@@ -76,6 +76,7 @@ export default {
           content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
           // padding: 0,
           popover: {
+            id: 'hello-world', // used for aria
             placement: 'start', // start, end, center
             position: 'right', // top, left, right, bottom
             // offset: 0,

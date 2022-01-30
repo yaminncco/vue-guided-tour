@@ -14,90 +14,101 @@
         v-bind="{ ...currentStep.overlay }"
         @overlay-click="onOverlayClick"
       />
-      <vgt-popover
+      <template
         v-if="
-          showPopover && ( 
-            currentStep.title ||
-            currentStep.content ||
-            $slots.content
-          )
+          showPopover &&
+            (
+              currentStep.title ||
+              currentStep.content ||
+              $slots.content
+            )
         "
-        :rect="currentStepRect"
-        :arrow="arrow"
-        :offset="offset"
-        :position="position"
-        :placement="placement"
-        :auto-adjust="autoAdjust"
-        v-bind="{ ...currentStep.popover }"
       >
-        <slot
-          v-if="closeBtn"
-          name="close"
+        <transition
+          name="popover-appear"
+          appear
         >
-          <button
-            class="vgt__close-btn"
-            aria-label="close"
-            @click="onCloseClick"
+          <vgt-popover
+            :rect="currentStepRect"
+            :arrow="arrow"
+            :offset="offset"
+            :position="position"
+            :placement="placement"
+            :auto-adjust="autoAdjust"
+            v-bind="{ ...currentStep.popover }"
           >
-            ×
-          </button>
-        </slot>
-        <div class="vgt__body">
-          <slot
-            name="content"
-            v-bind="{ stepIndex: currentStepIndex }"
-          >
-            <h3
-              v-if="currentStep.title"
-              class="vgt__title"
+            <slot
+              v-if="closeBtn"
+              name="close"
             >
-              {{ currentStep.title }}
-            </h3>
-            <div
-              v-if="currentStep.content"
-              class="vgt__content"
-            >
-              {{ currentStep.content }}
+              <button
+                class="vgt__close-btn"
+                aria-label="close Tour"
+                @click="onCloseClick"
+              >
+                ×
+              </button>
+            </slot>
+            <div class="vgt__body">
+              <slot
+                name="content"
+                v-bind="{ stepIndex: currentStepIndex }"
+              >
+                <h3
+                  v-if="currentStep.title"
+                  :id="currentStep.popover.attrs['aria-labelledby']"
+                  class="vgt__title"
+                >
+                  {{ currentStep.title }}
+                </h3>
+                <div
+                  v-if="currentStep.content"
+                  :id="currentStep.popover.attrs['aria-describedby']"
+                  class="vgt__content"
+                >
+                  {{ currentStep.content }}
+                </div>
+              </slot>
             </div>
-          </slot>
-        </div>
-        <div class="vgt__footer">
-          <div
-            v-if="pagination"
-            class="vgt__pages"
-          >
-            {{ currentStepIndex + 1 }} / {{ steps.length }}
-          </div>
-          <slot
-            name="nav"
-            v-bind="{ isFirstStep, isLastStep }"
-          >
-            <div class="vgt__nav">
-              <button
-                v-if="!isFirstStep"
-                class="vgt__btn vgt__btn--secondary vgt__prev-btn"
-                @click="onPrev"
+            <div class="vgt__footer">
+              <div
+                v-if="pagination"
+                class="vgt__pages"
               >
-                Prev
-              </button>
-              <button
-                v-if="isLastStep"
-                class="vgt__btn vgt__btn--primary vgt__end-btn"
-                @click="onEnd"
+                {{ currentStepIndex + 1 }} / {{ steps.length }}
+              </div>
+              <slot
+                name="nav"
+                v-bind="{ isFirstStep, isLastStep }"
               >
-                End
-              </button>
-              <button
-                v-else
-                class="vgt__btn vgt__btn--primary vgt__next-btn"
-                @click="onNext"
-              >
-                Next
-              </button>
+                <div class="vgt__nav">
+                  <button
+                    v-if="!isFirstStep"
+                    class="vgt__btn vgt__btn--secondary vgt__prev-btn"
+                    @click="onPrev"
+                  >
+                    Prev
+                  </button>
+                  <button
+                    v-if="isLastStep"
+                    class="vgt__btn vgt__btn--primary vgt__end-btn"
+                    @click="onEnd"
+                  >
+                    End
+                  </button>
+                  <button
+                    v-else
+                    class="vgt__btn vgt__btn--primary vgt__next-btn"
+                    @click="onNext"
+                  >
+                    Next
+                  </button>
+                </div>
+              </slot>
             </div>
-          </slot>
-        </div>
-      </vgt-popover>
+          </vgt-popover>
+        </transition>
+      </template>
     </div>
   </teleport>
 </template>
@@ -105,19 +116,8 @@
 <script>
 import VueGuidedOverlay from "./vueGuidedOverlay.vue";
 import VueGuidedPopover from "./vueGuidedPopover.vue";
-import {
-  ref,
-  computed,
-  onMounted,
-  inject,
-  nextTick,
-  watch,
-  toRefs,
-} from "vue";
-import {
-  isInView,
-  getBoundingWithPadding,
-} from "../use/utils";
+import { ref, computed, onMounted, inject, nextTick, watch, toRefs } from "vue";
+import { isInView, getBoundingWithPadding } from "../use/utils";
 import useRect from "../use/useRect";
 import useEvent from "../use/useEvent";
 import { vgtProps } from "../propsValidation";
@@ -144,6 +144,7 @@ export default {
     const vgtOverlay = ref(null);
 
     const $vgt = inject("$vgt");
+    const uid = Math.random().toString(36).substring(2);
 
     const showPopover = ref(false);
 
@@ -165,13 +166,23 @@ export default {
     });
 
     const currentStep = computed(() => {
-      if (currentStepIndex.value === -1) return {};
+      if (currentStepIndex.value < 0) return {};
       const stepObj = steps.value[currentStepIndex.value];
+      if (!stepObj) return {};
       return {
         ...stepObj,
         // popover options
         popover: {
           ...stepObj.popover,
+          attrs: {
+            id: stepObj.popover.id || `popover-${uid}`,
+            "aria-labelledby": stepObj.title
+              ? `${stepObj.popover.id || uid}-title`
+              : null,
+            "aria-describedby": stepObj.content
+              ? `${stepObj.popover.id || uid}-desc`
+              : null,
+          },
         },
         /*
         // overlay options
@@ -556,5 +567,12 @@ function useHightlight() {
 }
 .vgt__close-btn:hover {
   color: #5b6474;
+}
+
+.popover-appear-enter-active {
+  transition: opacity 0.2s ease-out;
+}
+.popover-appear-enter-from {
+  opacity: 0;
 }
 </style>
