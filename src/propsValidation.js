@@ -74,7 +74,14 @@ export const vgtProps = {
 export const overlayProps = {
   rect: {
     type: Object,
-    default: () => {},
+    default() {
+      return {
+        top: 0,
+        left: 0,
+        width: 0,
+        height: 0,
+      };
+    },
   },
   ...overlayOptions,
 };
@@ -82,7 +89,14 @@ export const overlayProps = {
 export const popoverProps = {
   rect: {
     type: Object,
-    required: true,
+    default() {
+      return {
+        top: 0,
+        left: 0,
+        width: 0,
+        height: 0,
+      };
+    },
   },
   ...popoverOptions,
 };
