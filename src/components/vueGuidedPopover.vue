@@ -1,19 +1,16 @@
 <template>
   <div
     ref="popoverRef"
-    role="dialog"
     class="vue-guided-popover"
     :style="popoverStyle"
-    v-bind="$attrs.attrs"
+    v-bind="$attrs"
   >
     <div
       v-if="arrow"
       :class="`vgt__arrow vgt__arrow--${currentPosition}`"
       :style="arrowStyle"
     />
-    <slot name="close" />
     <slot />
-    <slot name="nav" />
   </div>
 </template>
 
@@ -322,6 +319,7 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
   max-width: 300px;
   border-radius: 4px;
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 99999 !important;
 }
 .vgt__arrow {
   position: absolute;

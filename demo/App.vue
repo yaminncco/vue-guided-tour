@@ -76,12 +76,16 @@ export default {
           content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
           // padding: 0,
           popover: {
-            id: 'hello-world', // used for aria
             placement: 'start', // start, end, center
             position: 'right', // top, left, right, bottom
             // offset: 0,
             // arrow: true,
             // autoAdjust: true
+            
+            /*
+            id: 'hello-world', // used for aria-labelledby & aria-describedby
+            'aria-label': 'Hello world', // when title is undefined
+            */ 
           }
         },
         {

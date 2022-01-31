@@ -56,14 +56,14 @@
               >
                 <h3
                   v-if="currentStep.title"
-                  :id="currentStep.popover.attrs['aria-labelledby']"
+                  :id="currentStep.popover['aria-labelledby']"
                   class="vgt__title"
                 >
                   {{ currentStep.title }}
                 </h3>
                 <div
                   v-if="currentStep.content"
-                  :id="currentStep.popover.attrs['aria-describedby']"
+                  :id="currentStep.popover['aria-describedby']"
                   class="vgt__content"
                 >
                   {{ currentStep.content }}
@@ -174,15 +174,14 @@ export default {
         // popover options
         popover: {
           ...stepObj.popover,
-          attrs: {
-            id: stepObj.popover.id || `popover-${uid}`,
-            "aria-labelledby": stepObj.title
-              ? `${stepObj.popover.id || uid}-title`
-              : null,
-            "aria-describedby": stepObj.content
-              ? `${stepObj.popover.id || uid}-desc`
-              : null,
-          },
+          role: "dialog",
+          id: stepObj.popover.id || `popover-${uid}`,
+          "aria-labelledby": stepObj.title
+            ? `${stepObj.popover.id || uid}-title`
+            : null,
+          "aria-describedby": stepObj.content
+            ? `${stepObj.popover.id || uid}-desc`
+            : null,
         },
         /*
         // overlay options
