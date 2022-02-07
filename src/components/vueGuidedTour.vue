@@ -117,10 +117,11 @@
 <script>
 import VueGuidedOverlay from "./vueGuidedOverlay.vue";
 import VueGuidedPopover from "./vueGuidedPopover.vue";
-import { ref, computed, onMounted, inject, nextTick, watch, toRefs } from "vue";
+import { ref, computed, onMounted, inject, nextTick, toRefs } from "vue";
 import { isInView, getBoundingWithPadding } from "../use/utils";
 import useRect from "../use/useRect";
 import useEvent from "../use/useEvent";
+import useFocusTrap from "../use/useFocusTrap";
 import { vgtProps } from "../propsValidation";
 
 export default {
@@ -158,6 +159,9 @@ export default {
 
     const active = ref(false);
     const moving = ref(false);
+
+    const { enableTrap } = useFocusTrap(vgtRef);
+    let lastFocused;
 
     const { getHighlightEl, addHighlight, removeHighlight } = useHightlight();
 
@@ -267,6 +271,7 @@ export default {
 
       if (useOverlay.value) {
         const startTour = () => {
+          lastFocused = document.activeElement;
           vgtOverlay.value.overlayStart(done);
         };
 
@@ -295,11 +300,7 @@ export default {
         addHighlight(currentStepEl.value);
         moving.value = false;
         nextTick(() => {
-          const focusableEls = getFocusableElements();
-          if (focusableEls.length > 0) {
-            const firstFocusableEl = focusableEls[0];
-            firstFocusableEl.focus();
-          }
+          enableTrap();
         });
         emit(!move ? "afterStart" : "afterMove");
       }
@@ -321,6 +322,9 @@ export default {
       function done() {
         active.value = false;
         moving.value = false;
+        lastFocused.focus({
+          preventScroll: true
+        });
         emit("afterEnd");
       }
     };
@@ -355,38 +359,6 @@ export default {
       }
     };
 
-    const onKeyDown = (event) => {
-      if (!active.value) return;
-      const focusableEls = getFocusableElements();
-      switch (event.key) {
-        case "Tab":
-          if (focusableEls.length === 0) {
-            event.preventDefault();
-          } else {
-            const firstFocusableEl = focusableEls[0];
-            const lastFocusableEl = focusableEls[focusableEls.length - 1];
-            if (event.shiftKey) {
-              if (document.activeElement === firstFocusableEl) {
-                lastFocusableEl.focus();
-                event.preventDefault();
-              }
-            } else {
-              if (document.activeElement === lastFocusableEl) {
-                firstFocusableEl.focus();
-                event.preventDefault();
-              }
-            }
-          }
-          break;
-        case "ArrowLeft":
-        case "ArrowRight":
-          if (allowKeyboardEvent.value) {
-            event.preventDefault();
-          }
-          break;
-      }
-    };
-
     const onOverlayClick = () => {
       if (!allowOverlayClose.value) return;
       onEnd();
@@ -396,33 +368,7 @@ export default {
       onEnd();
     };
 
-    const getFocusableElements = () => {
-      const selector = `button, [href], input, select, textarea, [tabindex]`;
-      const focusableEls = [...vgtRef.value.querySelectorAll(selector)].filter(
-        (el) => {
-          if (parseInt(el.getAttribute("tabindex"), 10) < 0) {
-            return false;
-          }
-          if (el.disabled) {
-            return false;
-          }
-          while (el) {
-            if (
-              getComputedStyle(el).display === "none" ||
-              getComputedStyle(el).visibility === "hidden"
-            ) {
-              return false;
-            }
-            el = el.parentElement;
-          }
-          return true;
-        }
-      );
-      return focusableEls;
-    };
-
     useEvent(window, "keyup", onKeyUp);
-    useEvent(window, "keydown", onKeyDown);
 
     return {
       vgtRef,
