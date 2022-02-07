@@ -55,6 +55,10 @@ export const vgtProps = {
     type: Number,
     default: 0,
   },
+  useOverlay: {
+    type: Boolean,
+    default: true,
+  },
   pagination: {
     type: Boolean,
     default: true,

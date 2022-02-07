@@ -6,6 +6,7 @@
       :class="active && 'vgt--active'"
     >
       <vgt-overlay
+        v-if="useOverlay"
         ref="vgtOverlay"
         :rect="currentStepRect"
         :allow-overlay-close="allowOverlayClose"
@@ -139,6 +140,7 @@ export default {
       allowKeyboardEvent,
       allowEscClose,
       allowOverlayClose,
+      useOverlay,
     } = toRefs(props);
     const vgtRef = ref(null);
     const vgtOverlay = ref(null);
@@ -206,15 +208,6 @@ export default {
       $vgt.move = onMove;
     });
 
-    watch(active, (value) => {
-      if (!value) {
-        showPopover.value = false;
-        currentStepIndex.value = -1;
-        currentStepEl.value = null;
-        prevEl.value = null;
-      }
-    });
-
     const onStart = (index = 0) => {
       if (active.value) return;
       handleStepIndexChange(index);
@@ -247,36 +240,53 @@ export default {
     };
 
     const handleStepIndexChange = (index) => {
+      if (index < -1 || index > steps.value.length - 1) return;
+      if (index === currentStepIndex.value) return;
+
       const el = getHighlightEl(index, steps.value);
       if (!el && index !== -1) return;
 
-      const startTour = () => {
-        active.value = true;
-        moving.value = true;
-        vgtOverlay.value.overlayStart(done);
-      }
+      showPopover.value = false;
+      removeHighlight();
 
-      const moveTour = () => {
-        active.value = true;
-        moving.value = true;
-        const padding = currentStep.value.padding || props.padding;
-        const newRect = getBoundingWithPadding(
-          currentStepEl.value.getBoundingClientRect(),
-          padding
-        );
-        vgtOverlay.value.overlayMoveTo(newRect, done);
-      }
+      updateCurrentStep(index, el);
 
-      const endTour = () => {
-        showPopover.value = false;
-        removeHighlight();
-        active.value = false;
-        vgtOverlay.value.overlayClose(() => {
-          emit("afterEnd");
+      if (index === -1) {
+        handleEndTour();
+        return;
+      }
+      handleMoveTour();
+    };
+
+    const handleMoveTour = () => {
+      const el = currentStepEl.value;
+      const move = !!prevEl.value;
+
+      active.value = true;
+      moving.value = true;
+
+      if (useOverlay.value) {
+        const startTour = () => {
+          vgtOverlay.value.overlayStart(done);
+        };
+
+        const moveTour = () => {
+          const padding = currentStep.value.padding || props.padding;
+          const newRect = getBoundingWithPadding(
+            currentStepEl.value.getBoundingClientRect(),
+            padding
+          );
+          vgtOverlay.value.overlayMoveTo(newRect, done);
+        };
+
+        move ? moveTour() : startTour();
+      } else {
+        nextTick(() => {
+          done();
         });
-      };
+      }
 
-      const done = () => {
+      function done() {
         const inView = isInView(el.getBoundingClientRect());
         if (!inView) {
           el.scrollIntoView({ block: "center" });
@@ -292,22 +302,30 @@ export default {
           }
         });
         emit(!move ? "afterStart" : "afterMove");
-      };
-      
-      showPopover.value = false;
-      removeHighlight();
-      
-      updateCurrentStep(index, el);
-      const move = !!prevEl.value;
-      
-      if (index === -1) {
-        endTour();
-        return;
       }
-      move ? moveTour() : startTour();
     };
 
-    const updateCurrentStep = (index, el) => {
+    const handleEndTour = () => {
+      showPopover.value = false;
+      removeHighlight();
+      if (useOverlay.value) {
+        endTour();
+      } else {
+        done();
+      }
+
+      function endTour() {
+        vgtOverlay.value.overlayClose(done);
+      }
+
+      function done() {
+        active.value = false;
+        moving.value = false;
+        emit("afterEnd");
+      }
+    };
+
+    const updateCurrentStep = (index = -1, el) => {
       currentStepIndex.value = index;
       emit("update:stepIndex", currentStepIndex.value);
 
