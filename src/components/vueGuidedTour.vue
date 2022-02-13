@@ -3,6 +3,7 @@
     <div
       ref="vgtRef"
       class="vue-guided-tour"
+      v-bind="$attrs"
     >
       <vgt-overlay
         v-if="useOverlay"
@@ -85,21 +86,21 @@
                   <button
                     v-if="!isFirstStep"
                     class="vgt__btn vgt__btn--secondary vgt__prev-btn"
-                    @click="onPrev"
+                    @click="prev"
                   >
                     Prev
                   </button>
                   <button
                     v-if="isLastStep"
                     class="vgt__btn vgt__btn--primary vgt__end-btn"
-                    @click="onEnd"
+                    @click="end"
                   >
                     End
                   </button>
                   <button
                     v-else
                     class="vgt__btn vgt__btn--primary vgt__next-btn"
-                    @click="onNext"
+                    @click="next"
                   >
                     Next
                   </button>
@@ -129,6 +130,7 @@ export default {
     "vgt-overlay": VueGuidedOverlay,
     "vgt-popover": VueGuidedPopover,
   },
+  inheritAttrs: false,
   props: {
     ...vgtProps,
   },
@@ -145,7 +147,7 @@ export default {
     const vgtRef = ref(null);
     const vgtOverlay = ref(null);
 
-    const $vgt = inject("$vgt");
+    const $vgt = inject("$vgt", {});
     const uid = Math.random().toString(36).substring(2);
 
     const showPopover = ref(false);
@@ -188,12 +190,6 @@ export default {
             ? `${stepObj.popover.id || uid}-desc`
             : null,
         },
-        /*
-        // overlay options
-        overlay: {
-          ...stepObj.overlay
-        },
-        */
       };
     });
     const isFirstStep = computed(() => {
@@ -379,12 +375,11 @@ export default {
       currentStep,
       isFirstStep,
       isLastStep,
-      onStart,
-      onNext,
-      onPrev,
-      onEnd,
-      onMove,
-      onKeyUp,
+      start: onStart,
+      next: onNext,
+      prev: onPrev,
+      end: onEnd,
+      move: onMove,
       onOverlayClick,
       onCloseClick,
     };

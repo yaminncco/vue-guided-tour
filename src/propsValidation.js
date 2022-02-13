@@ -46,6 +46,7 @@ export const vgtProps = {
   steps: {
     type: Array,
     required: true,
+    default: () => []
   },
   stepIndex: {
     type: Number,

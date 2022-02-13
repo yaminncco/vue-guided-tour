@@ -1,6 +1,9 @@
 <template>
   <teleport to="body">
-    <div class="vue-guided-overlay">
+    <div
+      class="vue-guided-overlay"
+      v-bind="$attrs"
+    >
       <div
         class="vgt__overlay-wrapper"
         :style="overlayWrapperStyle"
@@ -38,6 +41,7 @@ import { rafThrottle } from "../use/utils";
 
 export default {
   name: "VueGuidedOverlay",
+  inheritAttrs: false,
   props: {
     ...overlayProps,
   },
