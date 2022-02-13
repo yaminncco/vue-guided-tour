@@ -3,7 +3,6 @@
     <div
       ref="vgtRef"
       class="vue-guided-tour"
-      :class="active && 'vgt--active'"
     >
       <vgt-overlay
         v-if="useOverlay"
@@ -436,8 +435,6 @@ function useHightlight() {
   position: absolute;
   top: 0;
   left: 0;
-}
-.vue-guided-tour.vgt--active {
   z-index: 99999 !important;
 }
 

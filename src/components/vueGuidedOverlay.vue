@@ -1,9 +1,6 @@
 <template>
   <teleport to="body">
-    <div
-      class="vue-guided-overlay"
-      :class="active && 'vgt--active'"
-    >
+    <div class="vue-guided-overlay">
       <div
         class="vgt__overlay-wrapper"
         :style="overlayWrapperStyle"
@@ -421,11 +418,8 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
-}
-.vue-guided-overlay.vgt--active {
   z-index: 99990 !important;
 }
-
 .vgt__overlay {
   background-color: #000;
   pointer-events: auto;
