@@ -5,7 +5,7 @@
       v-bind="$attrs"
     >
       <div
-        class="vgt__overlay-wrapper"
+        class="vgo__wrapper"
         :style="overlayWrapperStyle"
       >
         <div
@@ -16,7 +16,7 @@
               if (el) overlaysRef[key] = el;
             }
           "
-          :class="`vgt__overlay vgt__overlay--${key}`"
+          :class="`vgo__overlay vgo__overlay--${key}`"
           :style="overlaysRectStyle(key)"
           @click="onOverlayClick"
         />
@@ -47,12 +47,8 @@ export default {
   },
   emits: ["overlay-click", "update:rect"],
   setup(props, { emit }) {
-    const {
-      rect,
-      allowInteraction,
-      allowOverlayClose,
-      allowEscClose,
-    } = toRefs(props);
+    const { rect, allowInteraction, allowOverlayClose, allowEscClose } =
+      toRefs(props);
     const active = ref(false);
     const moving = ref(false);
 
@@ -96,7 +92,7 @@ export default {
         left: "0px",
         opacity: active.value ? "0.65" : "0",
         visibility: active.value ? "visible" : "hidden",
-        "pointer-events": allowInteraction.value && "none",
+        "pointer-events": allowInteraction.value ? "none" : null,
         transition: `${fadeDuration}ms opacity, ${fadeDuration}ms visibility`,
       };
     });
@@ -424,11 +420,11 @@ export default {
   left: 0;
   z-index: 99990 !important;
 }
-.vgt__overlay {
+.vgo__overlay {
   background-color: #000;
   pointer-events: auto;
 }
-.vgt__overlay--center {
+.vgo__overlay--center {
   pointer-events: none !important;
   background-color: transparent !important;
 }

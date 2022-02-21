@@ -81,12 +81,18 @@ export default {
             // offset: 0,
             // arrow: true,
             // autoAdjust: true
-            
             /*
             id: 'hello-world', // used for aria-labelledby & aria-describedby
             'aria-label': 'Hello world', // when title is undefined
-            */ 
+            */
+          },
+          /*
+          overlay: {
+            allowEscClose: false,
+            allowOverlayClose: false,
+            allowInteraction: false,
           }
+          */
         },
         {
           target: '.step-2',

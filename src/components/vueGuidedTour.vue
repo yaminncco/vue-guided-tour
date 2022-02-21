@@ -18,11 +18,7 @@
       <template
         v-if="
           showPopover &&
-            (
-              currentStep.title ||
-              currentStep.content ||
-              $slots.content
-            )
+            (currentStep.title || currentStep.content || $slots.content)
         "
       >
         <transition
@@ -136,14 +132,7 @@ export default {
   },
   emits: ["update:stepIndex", "afterStart", "afterEnd", "afterMove"],
   setup(props, { emit }) {
-    const {
-      stepIndex,
-      steps,
-      allowKeyboardEvent,
-      allowEscClose,
-      allowOverlayClose,
-      useOverlay,
-    } = toRefs(props);
+    const { stepIndex, steps, allowKeyboardEvent, useOverlay } = toRefs(props);
     const vgtRef = ref(null);
     const vgtOverlay = ref(null);
 
@@ -182,13 +171,17 @@ export default {
         popover: {
           ...stepObj.popover,
           role: "dialog",
-          id: stepObj.popover.id || `popover-${uid}`,
+          id: stepObj.popover?.id || `popover-${uid}`,
           "aria-labelledby": stepObj.title
-            ? `${stepObj.popover.id || uid}-title`
+            ? `${stepObj.popover?.id || uid}-title`
             : null,
           "aria-describedby": stepObj.content
-            ? `${stepObj.popover.id || uid}-desc`
+            ? `${stepObj.popover?.id || uid}-desc`
             : null,
+        },
+        // overlay options
+        overlay: {
+          ...stepObj.overlay,
         },
       };
     });
@@ -318,7 +311,7 @@ export default {
         active.value = false;
         moving.value = false;
         lastFocused.focus({
-          preventScroll: true
+          preventScroll: true,
         });
         emit("afterEnd");
       }
@@ -340,11 +333,6 @@ export default {
     const onKeyUp = (event) => {
       if (!active.value || !allowKeyboardEvent.value) return;
       switch (event.key) {
-        case "Escape":
-          if (allowEscClose.value) {
-            onEnd();
-          }
-          break;
         case "ArrowLeft":
           onPrev();
           break;
@@ -355,7 +343,6 @@ export default {
     };
 
     const onOverlayClick = () => {
-      if (!allowOverlayClose.value) return;
       onEnd();
     };
 
@@ -468,6 +455,7 @@ function useHightlight() {
 .vgt__btn {
   display: inline-block;
   padding: 5px 16px;
+  font-family: inherit;
   font-size: 0.8rem;
   font-weight: 500;
   line-height: 20px;
