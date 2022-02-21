@@ -7,10 +7,12 @@
   >
     <div
       v-if="arrow"
-      :class="`vgt__arrow vgt__arrow--${currentPosition}`"
+      :class="`vgp__arrow vgp__arrow--${currentPosition}`"
       :style="arrowStyle"
     />
-    <slot />
+    <div class="vgp__body">
+      <slot />
+    </div>
   </div>
 </template>
 
@@ -53,11 +55,11 @@ export default {
       () => {
         nextTick(() => {
           initPopover();
-        })
+        });
       },
       { deep: true, immediate: true }
     );
-  
+
     const initPopover = () => {
       if (!popoverRef.value) return;
       adjustCurrentPosition();
@@ -74,10 +76,10 @@ export default {
       const { height: popoverHeight, width: popoverWidth } =
         popoverRef.value.getBoundingClientRect();
 
-      const offset = props.offset;
-      const arrowSize = arrowRect.value.size;
       const position = currentPosition.value;
       const placement = props.placement;
+
+      const offset = props.offset + arrowRect.value.height;
 
       let tx = 0;
       let ty = 0;
@@ -85,21 +87,21 @@ export default {
       switch (position) {
         case "bottom":
           tx = rect.value.left;
-          ty = (rect.value.height + rect.value.top) + offset + arrowSize / 2;
+          ty = rect.value.height + rect.value.top + offset;
           break;
 
         case "top":
           tx = rect.value.left;
-          ty = rect.value.top - popoverHeight - offset - arrowSize / 2;
+          ty = rect.value.top - popoverHeight - offset;
           break;
 
         case "right":
-          tx = (rect.value.width + rect.value.left) + offset + arrowSize / 2;
+          tx = rect.value.width + rect.value.left + offset;
           ty = rect.value.top;
           break;
 
         case "left":
-          tx = rect.value.left - popoverWidth - offset - arrowSize / 2;
+          tx = rect.value.left - popoverWidth - offset;
           ty = rect.value.top;
           break;
       }
@@ -139,14 +141,12 @@ export default {
 
       const popoverRect = popoverRef.value.getBoundingClientRect();
       const isPopoverOutView = isOutView(popoverRect);
-      const arrowSize = arrowRect.value.size;
-      const arrowOffset = arrowRect.value.offset;
 
-      const outOffset = arrowSize + arrowOffset * 2;
+      const outOffset = arrowRect.value.height + arrowRect.value.offset;
       const hTop = rect.value.top + outOffset;
-      const hBottom = (rect.value.height + rect.value.top) - outOffset;
+      const hBottom = rect.value.height + rect.value.top - outOffset;
       const hLeft = rect.value.left + outOffset;
-      const hRight = (rect.value.width + rect.value.left) - outOffset;
+      const hRight = rect.value.width + rect.value.left - outOffset;
 
       const hIsOutView = isOutView({
         top: hBottom,
@@ -183,10 +183,8 @@ export default {
       const popoverSize = isPositionVertical(position)
         ? popoverHeight
         : popoverWidth;
-      const offset = props.offset;
-      const arrowSize = arrowRect.value.size;
-
-      return size >= popoverSize + arrowSize / 2 + offset;
+      const offset = props.offset + arrowRect.value.height;
+      return size >= popoverSize + offset;
     };
 
     const getSpaceSize = () => {
@@ -226,20 +224,26 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
   const x = ref(0);
   const y = ref(0);
 
+  const size = 14;
+  const height = (Math.sqrt(2) * size) / 2;
+  const offset = 6; // border-radius
+
   const arrowRect = computed(() => {
     return {
-      size: props.arrow ? 20 : 0,
-      offset: props.arrow ? 6 : 0,
+      size: props.arrow ? size : 0,
+      height: props.arrow ? height : 0,
+      offset: props.arrow ? offset : 0,
     };
   });
 
   const arrowStyle = computed(() => {
     return {
-      borderWidth: `${arrowRect.value.size / 2}px`,
+      width: `${arrowRect.value.size}px`,
+      height: `${arrowRect.value.size}px`,
       left: isPositionVertical(position.value) ? `0px` : null,
       top: !isPositionVertical(position.value) ? `0px` : null,
       [position.value]: "100%",
-      transform: `translateX(${x.value}px) translateY(${y.value}px)`,
+      transform: `translateX(${x.value}px) translateY(${y.value}px) rotate(45deg)`,
     };
   });
 
@@ -247,14 +251,27 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
     if (!props.arrow) return;
     const { height: popoverHeight, width: popoverWidth } =
       popoverRef.value.getBoundingClientRect();
-
     const placement = props.placement;
-    const arrowSize = arrowRect.value.size;
-    const arrowOffset = arrowRect.value.offset;
+
+    const radiusOffset = arrowRect.value.offset;
+    const rotateOffset =
+      (2 * arrowRect.value.height - arrowRect.value.size) / 2;
+    const offset = rotateOffset + radiusOffset;
 
     let tx = 0;
     let ty = 0;
 
+    if (isPositionVertical(position.value)) {
+      ty =
+        position.value === "bottom"
+          ? arrowRect.value.size / 2
+          : -(arrowRect.value.size / 2);
+    } else {
+      tx =
+        position.value === "right"
+          ? arrowRect.value.size / 2
+          : -(arrowRect.value.size / 2);
+    }
     switch (placement) {
       case "center":
         isPositionVertical(position.value)
@@ -262,36 +279,50 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
               rect.value.left -
               popoverX.value +
               rect.value.width / 2 -
-              arrowSize / 2)
+              arrowRect.value.size / 2)
           : (ty =
               rect.value.top -
               popoverY.value +
               rect.value.height / 2 -
-              arrowSize / 2);
+              arrowRect.value.size / 2);
         break;
       case "start":
         isPositionVertical(position.value)
-          ? (tx = rect.value.left - popoverX.value + arrowOffset)
-          : (ty = rect.value.top - popoverY.value + arrowOffset);
+          ? (tx = rect.value.left - popoverX.value + offset)
+          : (ty = rect.value.top - popoverY.value + offset);
         break;
       case "end":
         isPositionVertical(position.value)
-          ? (tx = (rect.value.width + rect.value.left) - popoverX.value - arrowSize - arrowOffset)
-          : (ty = (rect.value.height + rect.value.top) - popoverY.value - arrowSize - arrowOffset);
+          ? (tx =
+              rect.value.width +
+              rect.value.left -
+              popoverX.value -
+              arrowRect.value.size -
+              offset)
+          : (ty =
+              rect.value.height +
+              rect.value.top -
+              popoverY.value -
+              arrowRect.value.size -
+              offset);
         break;
     }
 
+    const tMin = offset;
+    const tMax = (length) => length - arrowRect.value.height * 2 + offset;
+    const txMax = tMax(popoverWidth);
+    const tyMax = tMax(popoverHeight);
     if (isPositionVertical(position.value)) {
-      if (tx >= popoverWidth - arrowSize - arrowOffset) {
-        tx = popoverWidth - arrowSize - arrowOffset;
-      } else if (tx <= arrowOffset) {
-        tx = arrowOffset;
+      if (tx > txMax) {
+        tx = txMax;
+      } else if (tx < tMin) {
+        tx = tMin;
       }
     } else {
-      if (ty >= popoverHeight - arrowSize - arrowOffset) {
-        ty = popoverHeight - arrowSize - arrowOffset;
-      } else if (ty <= arrowOffset) {
-        ty = arrowOffset;
+      if (ty > tyMax) {
+        ty = tyMax;
+      } else if (ty < tMin) {
+        ty = tMin;
       }
     }
 
@@ -312,40 +343,30 @@ function useArrow(props, popoverX, popoverY, popoverRef, position, rect) {
   position: fixed;
   top: 0;
   left: 0;
-  background: #fff;
-  margin: 0;
-  padding: 15px;
   min-width: 250px;
   max-width: 300px;
-  border-radius: 4px;
-  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   z-index: 99999 !important;
 }
-.vgt__arrow {
+
+.vue-guided-popover,
+.vgp__body,
+.vgp__arrow {
+  background: #fff;
+}
+
+.vue-guided-popover,
+.vgp__body {
+  border-radius: 6px;
+}
+
+.vgp__body {
+  position: relative;
+  padding: 15px;
+}
+
+.vgp__arrow {
   position: absolute;
-  width: 0;
-  height: 0;
-  color: #fff;
-  border-style: solid;
-}
-.vgt__arrow--bottom {
-  border-top-color: transparent;
-  border-left-color: transparent;
-  border-right-color: transparent;
-}
-.vgt__arrow--top {
-  border-bottom-color: transparent;
-  border-left-color: transparent;
-  border-right-color: transparent;
-}
-.vgt__arrow--left {
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-  border-right-color: transparent;
-}
-.vgt__arrow--right {
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-  border-left-color: transparent;
+  box-shadow: 1px 1px 15px rgba(0, 0, 0, 0.2);
 }
 </style>
