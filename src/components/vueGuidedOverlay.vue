@@ -83,9 +83,11 @@ export default {
     const moveEase = "cubic-bezier(.65,.05,.36,1)";
 
     const overlayWrapperStyle = computed(() => {
+      const hasHScroll = document.body.scrollWidth > document.body.clientWidth;
       return {
         width: `${overlayWrapper.width}px`,
         height: `${overlayWrapper.height}px`,
+        "max-width": !hasHScroll ? "100%" : null,
         overflow: "hidden",
         position: "absolute",
         top: "0px",
@@ -205,29 +207,46 @@ export default {
     };
 
     const updateOverlayWrapper = () => {
-      const fullHeight = Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight,
-        document.body.offsetHeight,
-        document.documentElement.offsetHeight,
-        document.body.clientHeight,
-        document.documentElement.clientHeight
-      );
-      const fullWidth = Math.max(
-        document.body.scrollWidth,
-        document.documentElement.scrollWidth,
-        document.body.offsetWidth,
-        document.documentElement.offsetWidth,
-        document.body.clientWidth,
-        document.documentElement.clientWidth
-      );
-      overlayWrapper.width = fullWidth;
-      overlayWrapper.height = fullHeight;
+      const { innerWidth: w, innerHeight: h } = window;
+      overlayWrapper.width = w
+      overlayWrapper.height = h
+      nextTick(() => {
+        const fullHeight = Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight,
+          document.body.offsetHeight,
+          document.documentElement.offsetHeight,
+          document.body.clientHeight,
+          document.documentElement.clientHeight
+        );
+        const fullWidth = Math.max(
+          document.body.scrollWidth,
+          document.documentElement.scrollWidth,
+          document.body.offsetWidth,
+          document.documentElement.offsetWidth,
+          document.body.clientWidth,
+          document.documentElement.clientWidth
+        );
+        overlayWrapper.width = fullWidth;
+        overlayWrapper.height = fullHeight;
+      })
     };
 
     const resetOverlayWrapper = () => {
       overlayWrapper.width = 0;
       overlayWrapper.height = 0;
+    };
+
+    const resetOverlaysRect = () => {
+      for (const overlayKey in overlaysRect) {
+        const overlay = overlaysRect[overlayKey];
+        overlay.width = overlayRectDefault.width;
+        overlay.height = overlayRectDefault.height;
+        overlay.x = overlayRectDefault.x;
+        overlay.y = overlayRectDefault.y;
+        overlay.scaleX = overlayRectDefault.scaleX;
+        overlay.scaleY = overlayRectDefault.scaleY;
+      }
     };
 
     const updateOverlaysRect = () => {
@@ -292,9 +311,8 @@ export default {
 
     const overlayUpdate = () => {
       if (!active.value || moving.value) return;
-      resetOverlayWrapper();
+      updateOverlayWrapper();
       nextTick(() => {
-        updateOverlayWrapper();
         updateRect(currentRect, rect.value);
         updateOverlaysRect();
       });
@@ -314,6 +332,7 @@ export default {
     const overlayFadeOut = (callback = undefined) => {
       setTimeout(() => {
         resetOverlayWrapper();
+        resetOverlaysRect();
         if (callback) {
           callback();
         }
@@ -322,9 +341,8 @@ export default {
 
     const overlayMove = (callback) => {
       moving.value = true;
-      resetOverlayWrapper();
+      updateOverlayWrapper();
       nextTick(() => {
-        updateOverlayWrapper();
         updateRect(
           prevRect,
           overlaysRef.value["center"].getBoundingClientRect()
@@ -418,6 +436,7 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
+  right: 0;
   z-index: 99990 !important;
 }
 .vgo__overlay {
