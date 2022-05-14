@@ -132,7 +132,7 @@ export default {
   },
   emits: ["update:stepIndex", "afterStart", "afterEnd", "afterMove"],
   setup(props, { emit }) {
-    const { stepIndex, steps, allowKeyboardEvent, useOverlay } = toRefs(props);
+    const { stepIndex, steps, allowKeyboardEvent, useOverlay, padding } = toRefs(props);
     const vgtRef = ref(null);
     const vgtOverlay = ref(null);
 
@@ -157,10 +157,13 @@ export default {
 
     const { rect } = useRect(currentStepEl);
     const currentStepRect = computed(() => {
-      const padding = currentStep.value.padding || props.padding;
-      return getBoundingWithPadding(rect, padding);
+      return getBoundingWithPadding(rect, currentStepPadding.value);
     });
-
+    const currentStepPadding = computed(() => {
+      return currentStep.value.padding || currentStep.value.padding === 0
+        ? currentStep.value.padding
+        : padding.value;
+    });
     const currentStep = computed(() => {
       if (currentStepIndex.value < 0) return {};
       const stepObj = steps.value[currentStepIndex.value];
@@ -264,10 +267,9 @@ export default {
         };
 
         const moveTour = () => {
-          const padding = currentStep.value.padding || props.padding;
           const newRect = getBoundingWithPadding(
-            currentStepEl.value.getBoundingClientRect(),
-            padding
+            el.getBoundingClientRect(),
+            currentStepPadding.value
           );
           vgtOverlay.value.overlayMoveTo(newRect, done);
         };
@@ -285,7 +287,7 @@ export default {
           el.scrollIntoView({ block: "center" });
         }
         showPopover.value = true;
-        addHighlight(currentStepEl.value);
+        addHighlight(el);
         moving.value = false;
         nextTick(() => {
           enableTrap();
