@@ -132,7 +132,14 @@ export default {
   },
   emits: ["update:stepIndex", "afterStart", "afterEnd", "afterMove"],
   setup(props, { emit }) {
-    const { stepIndex, steps, allowKeyboardEvent, useOverlay, padding } = toRefs(props);
+    const {
+      stepIndex,
+      steps,
+      allowKeyboardEvent,
+      useOverlay,
+      padding,
+      name: tourName,
+    } = toRefs(props);
     const vgtRef = ref(null);
     const vgtOverlay = ref(null);
 
@@ -196,11 +203,18 @@ export default {
     });
 
     onMounted(() => {
-      $vgt.start = onStart;
-      $vgt.next = onNext;
-      $vgt.prev = onPrev;
-      $vgt.end = onEnd;
-      $vgt.move = onMove;
+      const methods = {
+        start: onStart,
+        next: onNext,
+        prev: onPrev,
+        end: onEnd,
+        move: onMove,
+      };
+      if (tourName.value) {
+        Object.defineProperty($vgt, tourName.value, { value: methods });
+      } else {
+        Object.assign($vgt, methods);
+      }
     });
 
     const onStart = (index = 0) => {

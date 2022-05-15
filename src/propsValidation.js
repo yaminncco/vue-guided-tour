@@ -46,7 +46,7 @@ export const vgtProps = {
   steps: {
     type: Array,
     required: true,
-    default: () => []
+    default: () => [],
   },
   stepIndex: {
     type: Number,
@@ -71,6 +71,10 @@ export const vgtProps = {
   allowKeyboardEvent: {
     type: Boolean,
     default: true,
+  },
+  name: {
+    type: String,
+    default: undefined,
   },
   ...popoverOptions,
   ...overlayOptions,
