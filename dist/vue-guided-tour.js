@@ -151,6 +151,10 @@
     allowKeyboardEvent: {
       type: Boolean,
       default: true
+    },
+    name: {
+      type: String,
+      default: undefined
     }
   }, popoverOptions), overlayOptions);
   var overlayProps = _objectSpread2({
@@ -311,9 +315,11 @@
       const moveEase = "cubic-bezier(.65,.05,.36,1)";
 
       const overlayWrapperStyle = vue.computed(() => {
+        const hasHScroll = document.body.scrollWidth > document.body.clientWidth;
         return {
           width: `${overlayWrapper.width}px`,
           height: `${overlayWrapper.height}px`,
+          "max-width": !hasHScroll ? "100%" : null,
           overflow: "hidden",
           position: "absolute",
           top: "0px",
@@ -433,29 +439,46 @@
       };
 
       const updateOverlayWrapper = () => {
-        const fullHeight = Math.max(
-          document.body.scrollHeight,
-          document.documentElement.scrollHeight,
-          document.body.offsetHeight,
-          document.documentElement.offsetHeight,
-          document.body.clientHeight,
-          document.documentElement.clientHeight
-        );
-        const fullWidth = Math.max(
-          document.body.scrollWidth,
-          document.documentElement.scrollWidth,
-          document.body.offsetWidth,
-          document.documentElement.offsetWidth,
-          document.body.clientWidth,
-          document.documentElement.clientWidth
-        );
-        overlayWrapper.width = fullWidth;
-        overlayWrapper.height = fullHeight;
+        const { innerWidth: w, innerHeight: h } = window;
+        overlayWrapper.width = w;
+        overlayWrapper.height = h;
+        vue.nextTick(() => {
+          const fullHeight = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.offsetHeight,
+            document.body.clientHeight,
+            document.documentElement.clientHeight
+          );
+          const fullWidth = Math.max(
+            document.body.scrollWidth,
+            document.documentElement.scrollWidth,
+            document.body.offsetWidth,
+            document.documentElement.offsetWidth,
+            document.body.clientWidth,
+            document.documentElement.clientWidth
+          );
+          overlayWrapper.width = fullWidth;
+          overlayWrapper.height = fullHeight;
+        });
       };
 
       const resetOverlayWrapper = () => {
         overlayWrapper.width = 0;
         overlayWrapper.height = 0;
+      };
+
+      const resetOverlaysRect = () => {
+        for (const overlayKey in overlaysRect) {
+          const overlay = overlaysRect[overlayKey];
+          overlay.width = overlayRectDefault.width;
+          overlay.height = overlayRectDefault.height;
+          overlay.x = overlayRectDefault.x;
+          overlay.y = overlayRectDefault.y;
+          overlay.scaleX = overlayRectDefault.scaleX;
+          overlay.scaleY = overlayRectDefault.scaleY;
+        }
       };
 
       const updateOverlaysRect = () => {
@@ -520,9 +543,8 @@
 
       const overlayUpdate = () => {
         if (!active.value || moving.value) return;
-        resetOverlayWrapper();
+        updateOverlayWrapper();
         vue.nextTick(() => {
-          updateOverlayWrapper();
           updateRect(currentRect, rect.value);
           updateOverlaysRect();
         });
@@ -542,6 +564,7 @@
       const overlayFadeOut = (callback = undefined) => {
         setTimeout(() => {
           resetOverlayWrapper();
+          resetOverlaysRect();
           if (callback) {
             callback();
           }
@@ -550,9 +573,8 @@
 
       const overlayMove = (callback) => {
         moving.value = true;
-        resetOverlayWrapper();
+        updateOverlayWrapper();
         vue.nextTick(() => {
-          updateOverlayWrapper();
           updateRect(
             prevRect,
             overlaysRef.value["center"].getBoundingClientRect()
@@ -693,7 +715,7 @@
     }
   }
 
-  var css_248z$2 = "\n.vue-guided-overlay {\r\n  position: absolute;\r\n  top: 0;\r\n  left: 0;\r\n  z-index: 99990 !important;\n}\n.vgo__overlay {\r\n  background-color: #000;\r\n  pointer-events: auto;\n}\n.vgo__overlay--center {\r\n  pointer-events: none !important;\r\n  background-color: transparent !important;\n}\r\n";
+  var css_248z$2 = "\n.vue-guided-overlay {\r\n  position: absolute;\r\n  top: 0;\r\n  left: 0;\r\n  right: 0;\r\n  z-index: 99990 !important;\n}\n.vgo__overlay {\r\n  background-color: #000;\r\n  pointer-events: auto;\n}\n.vgo__overlay--center {\r\n  pointer-events: none !important;\r\n  background-color: transparent !important;\n}\r\n";
   styleInject(css_248z$2);
 
   script$2.render = render$2;
@@ -1217,7 +1239,14 @@
     },
     emits: ["update:stepIndex", "afterStart", "afterEnd", "afterMove"],
     setup(props, { emit }) {
-      const { stepIndex, steps, allowKeyboardEvent, useOverlay } = vue.toRefs(props);
+      const {
+        stepIndex,
+        steps,
+        allowKeyboardEvent,
+        useOverlay,
+        padding,
+        name: tourName,
+      } = vue.toRefs(props);
       const vgtRef = vue.ref(null);
       const vgtOverlay = vue.ref(null);
 
@@ -1242,10 +1271,13 @@
 
       const { rect } = useRect(currentStepEl);
       const currentStepRect = vue.computed(() => {
-        const padding = currentStep.value.padding || props.padding;
-        return getBoundingWithPadding(rect, padding);
+        return getBoundingWithPadding(rect, currentStepPadding.value);
       });
-
+      const currentStepPadding = vue.computed(() => {
+        return currentStep.value.padding || currentStep.value.padding === 0
+          ? currentStep.value.padding
+          : padding.value;
+      });
       const currentStep = vue.computed(() => {
         if (currentStepIndex.value < 0) return {};
         const stepObj = steps.value[currentStepIndex.value];
@@ -1278,11 +1310,18 @@
       });
 
       vue.onMounted(() => {
-        $vgt.start = onStart;
-        $vgt.next = onNext;
-        $vgt.prev = onPrev;
-        $vgt.end = onEnd;
-        $vgt.move = onMove;
+        const methods = {
+          start: onStart,
+          next: onNext,
+          prev: onPrev,
+          end: onEnd,
+          move: onMove,
+        };
+        if (tourName.value) {
+          Object.defineProperty($vgt, tourName.value, { value: methods });
+        } else {
+          Object.assign($vgt, methods);
+        }
       });
 
       const onStart = (index = 0) => {
@@ -1349,10 +1388,9 @@
           };
 
           const moveTour = () => {
-            const padding = currentStep.value.padding || props.padding;
             const newRect = getBoundingWithPadding(
-              currentStepEl.value.getBoundingClientRect(),
-              padding
+              el.getBoundingClientRect(),
+              currentStepPadding.value
             );
             vgtOverlay.value.overlayMoveTo(newRect, done);
           };
@@ -1370,7 +1408,7 @@
             el.scrollIntoView({ block: "center" });
           }
           showPopover.value = true;
-          addHighlight(currentStepEl.value);
+          addHighlight(el);
           moving.value = false;
           vue.nextTick(() => {
             enableTrap();
