@@ -27,6 +27,7 @@ module.exports = defineUserConfig({
     },
     docsRepo: 'yaminncco/vue-guided-tour',
     lastUpdated: true,
+    docsDir: 'docs',
     editLinks: true,
     contributors: false
   }),

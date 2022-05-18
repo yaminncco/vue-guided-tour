@@ -8,5 +8,6 @@ module.exports.localTheme = (options) => {
     layouts: {
       Layout: path.resolve(__dirname, "layouts/Layout.vue"),
     },
+    clientAppEnhanceFiles: path.resolve(__dirname, './clientAppEnhance.js'),
   };
 };
