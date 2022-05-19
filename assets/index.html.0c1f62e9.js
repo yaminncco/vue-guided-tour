@@ -1,0 +1,1 @@
+const t={key:"v-8daa1a0e",path:"/",title:"Introduction",lang:"en-US",frontmatter:{title:"Introduction"},excerpt:"",headers:[{level:3,title:"A vue.js 3 component to guide your visitors.",slug:"a-vue-js-3-component-to-guide-your-visitors",children:[]}],git:{updatedTime:1652718015e3},filePathRelative:"README.md"};export{t as data};

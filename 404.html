@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="generator" content="VuePress 2.0.0-beta.45">
+    <style>
+      :root {
+        --c-bg: #fff;
+      }
+      html.dark {
+        --c-bg: #22272e;
+      }
+      html, body {
+        background-color: var(--c-bg);
+      }
+    </style>
+    <script>
+      const userMode = localStorage.getItem('vuepress-color-scheme');
+			const systemDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+			if (userMode === 'dark' || (userMode !== 'light' && systemDarkMode)) {
+				document.documentElement.classList.toggle('dark', true);
+			}
+    </script>
+    <title>VueGuidedTour</title><meta name="description" content="A vue.js 3 component to guide your visitors">
+    <link rel="modulepreload" href="/vue-guided-tour/assets/app.f6ac025a.js"><link rel="modulepreload" href="/vue-guided-tour/assets/404.html.43d649a1.js"><link rel="modulepreload" href="/vue-guided-tour/assets/404.html.f166316b.js"><link rel="prefetch" href="/vue-guided-tour/assets/index.html.0c1f62e9.js"><link rel="prefetch" href="/vue-guided-tour/assets/config.html.a3957022.js"><link rel="prefetch" href="/vue-guided-tour/assets/getting-started.html.7a97ef32.js"><link rel="prefetch" href="/vue-guided-tour/assets/index.html.1bd51a03.js"><link rel="prefetch" href="/vue-guided-tour/assets/config.html.bf8e5b5a.js"><link rel="prefetch" href="/vue-guided-tour/assets/getting-started.html.918420fb.js"><link rel="prefetch" href="/vue-guided-tour/assets/404.9a4f56fe.js"><link rel="prefetch" href="/vue-guided-tour/assets/Layout.d8ac59bc.js">
+    <link rel="stylesheet" href="/vue-guided-tour/assets/style.84d157a1.css">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="theme-container"><div class="theme-default-content"><h1>404</h1><blockquote>How did we get here?</blockquote><a href="/vue-guided-tour/" class="">Take me home</a></div></div><!----><!----><!--]--></div>
+    <script type="module" src="/vue-guided-tour/assets/app.f6ac025a.js" defer></script>
+  </body>
+</html>
