@@ -1,13 +1,10 @@
 <template>
-  <ParentLayout/>
   <ClientOnly>
     <VueGuidedTour :steps="steps" />
   </ClientOnly>
 </template>
 
 <script setup>
-import ParentLayout from '@vuepress/theme-default/lib/client/layouts/Layout.vue'
-
 const steps = [
   {
     target: ".introduction",

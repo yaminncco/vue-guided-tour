@@ -1,12 +1,11 @@
-const { defineUserConfig } = require("vuepress");
-const { localTheme } = require("./theme");
+const { defineUserConfig, defaultTheme } = require("vuepress");
 
 module.exports = defineUserConfig({
   base: "/vue-guided-tour/",
   lang: "en-US",
   title: "VueGuidedTour",
   description: "A vue.js 3 component to guide your visitors",
-  theme: localTheme({
+  theme: defaultTheme({
     navbar: [
       {
         text: "Github",
@@ -25,10 +24,10 @@ module.exports = defineUserConfig({
         },
       ],
     },
-    docsRepo: 'yaminncco/vue-guided-tour',
+    docsRepo: "yaminncco/vue-guided-tour",
     lastUpdated: true,
-    docsDir: 'docs',
+    docsDir: "docs",
     editLinks: true,
-    contributors: false
+    contributors: false,
   }),
 });
