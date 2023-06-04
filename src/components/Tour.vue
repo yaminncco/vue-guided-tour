@@ -98,13 +98,13 @@ import {
   ref,
   computed,
   onMounted,
-  inject,
   nextTick,
   toRefs,
   defineComponent,
 } from 'vue'
 import { vueGuidedTourProps } from '../props'
 import {
+  useVgt,
   useRect,
   useEvent,
   useFocusTrap,
@@ -138,7 +138,7 @@ export default defineComponent({
       null
     )
 
-    const $vgt = inject('$vgt', {})
+    const $vgt = useVgt()
     const uid = Math.random().toString(36).substring(2)
 
     const showPopover = ref(false)

@@ -1,5 +1,5 @@
 ---
-title: "Config"
+title: 'Config'
 ---
 
 ## Props
@@ -136,29 +136,37 @@ Property defined in step will overwrite what is defined in the props
 ## Methods
 
 #### `$vgt.start(index)`
+
 Start the tour from the index (default 0).
 
 #### `$vgt.next()`
+
 Move on to the next step.
 
 #### `$vgt.prev()`
+
 Move on to the prev step.
 
 #### `$vgt.end()`
+
 End the tour.
 
 #### `$vgt.move(index)`
+
 Move to a specific step.
 
 ## Events
 
 #### `@after-start`
+
 Emits after the tour start.
 
 #### `@after-end`
+
 Emits after the tour end.
 
 #### `@after-move`
+
 Emits after the tour move to the next or prev step.
 
 ## Slots

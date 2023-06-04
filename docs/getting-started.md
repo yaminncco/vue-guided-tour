@@ -1,5 +1,5 @@
 ---
-title: "Getting Started"
+title: 'Getting Started'
 ---
 
 ## Installation
@@ -11,13 +11,13 @@ npm i vue-guided-tour --save
 ## Usage
 
 ```js
-import { createApp } from "vue";
-import App from "./App.vue";
-import VueGuidedTour from "vue-guided-tour";
+import { createApp } from 'vue'
+import App from './App.vue'
+import VueGuidedTour from 'vue-guided-tour'
 
-const app = createApp(App);
-app.use(VueGuidedTour);
-app.mount("#app");
+const app = createApp(App)
+app.use(VueGuidedTour)
+app.mount('#app')
 ```
 
 ```vue
@@ -32,29 +32,33 @@ export default {
     return {
       steps: [
         {
-          target: ".step-1",
-          content: "Hello world",
+          target: '.step-1',
+          content: 'Hello world',
         },
       ],
-    };
+    }
   },
-};
+}
 </script>
 ```
 
-Then in your components start it with
+Then in your components you can start the tour
 
 ```js
-this.$vgt.start(0);
+this.$vgt.start(0)
 ```
 
-In setup function you need to inject `$vgt`
+In setup function use `useVgt` composable
 
 ```js
-import { inject } from "vue";
+import { useVgt } from "vue-guided-tour";
 
 setup() {
-  const $vgt = inject("$vgt");
+  const $vgt = useVgt();
   $vgt.start(0);
 }
 ```
+
+::: warning
+if prop [`name`](config.md#name) is set then you start the tour `$vgt[name].start(0)`
+:::
