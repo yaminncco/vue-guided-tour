@@ -3,8 +3,5 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   base: '/vue-guided-tour/',
-  build: {
-    outDir: 'docs'
-  },
-  plugins: [vue()]
+  plugins: [vue()],
 })

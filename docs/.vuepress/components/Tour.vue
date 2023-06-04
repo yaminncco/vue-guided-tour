@@ -4,36 +4,38 @@
   </ClientOnly>
 </template>
 
-<script setup>
-const steps = [
+<script setup lang="ts">
+import { VueGuidedTourProps } from '../../../src'
+
+const steps: VueGuidedTourProps['steps'] = [
   {
-    target: ".introduction",
-    title: "Introduction",
-    content: "Docs introduction",
-    padding: 10
+    target: '.introduction',
+    title: 'Introduction',
+    content: 'Docs introduction',
+    padding: 10,
   },
   {
-    target: ".installation",
-    content: "Installation command",
-    padding: 5
+    target: '.installation',
+    content: 'Installation command',
+    padding: 5,
   },
   {
-    target: ".sidebar-items li:nth-child(1) .sidebar-item-children",
-    content: "Getting Started",
+    target: '.sidebar-items > li:nth-child(1)',
+    content: 'Getting Started',
     popover: {
-      position: "right"
-    }
+      position: 'right',
+    },
   },
   {
-    target: ".sidebar-items li:nth-child(2) .sidebar-item-children",
-    content: "Config",
+    target: '.sidebar-items > li:nth-child(2)',
+    content: 'Config',
     popover: {
-      position: "right"
-    }
+      position: 'right',
+    },
   },
   {
     target: ".navbar-items [aria-label='Github']",
-    content: "Github link",
-  }
+    content: 'Github link',
+  },
 ]
 </script>

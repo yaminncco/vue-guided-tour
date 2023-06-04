@@ -1,23 +1,15 @@
 <template>
   <div class="app">
     <div class="demo">
-      <h1 class="demo-title">
-        Vue Guided Tour
-      </h1>
+      <h1 class="demo-title">Vue Guided Tour</h1>
       <p>a vue.js 3 component to guide your visitors</p>
-      <a 
-        href="#"
-        class="demo-btn"
-        @click.prevent="start"
-      >
-        Start the tour
-      </a>
+      <a href="#" class="demo-btn" @click.prevent="start"> Start the tour </a>
     </div>
     <div class="demo-grid">
       <div
         v-for="(step, index) in steps"
         :key="index"
-        :class="`step step-${index+1}`"
+        :class="`step step-${index + 1}`"
       />
     </div>
   </div>
@@ -63,92 +55,83 @@
   </vue-guided-tour>
 </template>
 
-<script>
-export default {
+<script lang="ts">
+import { defineComponent, ref } from 'vue'
+import { VueGuidedTourProps } from '../src'
+
+export default defineComponent({
   name: 'App',
-  data() {
+  setup() {
+    const currentStepIndex = ref(-1)
+    const steps = ref<VueGuidedTourProps['steps']>([
+      {
+        target: '.step-1',
+        title: 'Hello world',
+        content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
+        popover: {
+          placement: 'start',
+          position: 'right',
+        },
+      },
+      {
+        target: '.step-2',
+        title: 'Hello world 2',
+        content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
+        popover: {
+          placement: 'end',
+          position: 'right',
+        },
+      },
+      {
+        target: '.step-3',
+        content: 'Hello world 3',
+        popover: {
+          placement: 'center',
+          position: 'left',
+        },
+      },
+      {
+        target: '.step-4',
+        content: 'Hello world 4',
+        popover: {
+          placement: 'center',
+          position: 'top',
+        },
+      },
+      {
+        target: '.step-5',
+        content: 'Hello world 5',
+        popover: {
+          placement: 'start',
+          position: 'left',
+        },
+      },
+      {
+        target: '.step-6',
+        content: 'Hello world 6',
+        popover: {
+          placement: 'center',
+          position: 'right',
+        },
+      },
+      {
+        target: '.step-7',
+        content: 'Hello world 7',
+        popover: {
+          placement: 'center',
+          position: 'left',
+        },
+      },
+    ])
+
     return {
-      currentStepIndex: -1,
-      steps: [
-        {
-          target: '.step-1',
-          title: 'Hello world',
-          content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
-          // padding: 0,
-          popover: {
-            placement: 'start', // start, end, center
-            position: 'right', // top, left, right, bottom
-            // offset: 0,
-            // arrow: true,
-            // autoAdjust: true
-            /*
-            id: 'hello-world', // used for aria-labelledby & aria-describedby
-            'aria-label': 'Hello world', // when title is undefined
-            */
-          },
-          /*
-          overlay: {
-            allowEscClose: false,
-            allowOverlayClose: false,
-            allowInteraction: false,
-          }
-          */
-        },
-        {
-          target: '.step-2',
-          title: 'Hello world 2',
-          content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
-          popover: {
-            placement: 'end',
-            position: 'right',
-          }
-        },
-        {
-          target: '.step-3',
-          content: 'Hello world 3',
-          popover: {
-            placement: 'center',
-            position: 'left',
-          }
-        },
-        {
-          target: '.step-4',
-          content: "Hello world 4",
-          popover: {
-            placement: 'center',
-            position: 'top',
-          }
-        },
-        {
-          target: '.step-5',
-          content: 'Hello world 5',
-          popover: {
-            placement: 'start',
-            position: 'left',
-          }
-        },
-        {
-          target: '.step-6',
-          content: 'Hello world 6',
-          popover: {
-            placement: 'center',
-            position: 'right',
-          }
-        },
-        {
-          target: '.step-7',
-          content: 'Hello world 7',
-          popover: {
-            placement: 'center',
-            position: 'left',
-          }
-        },
-      ]
+      currentStepIndex,
+      steps,
     }
   },
   methods: {
     start() {
-      this.$vgt.start(0)
+      this.$vgt.start?.(0)
     },
     onAfterStart() {
       // call after the tour start
@@ -161,9 +144,9 @@ export default {
     onAfterMove() {
       // call after the tour move to the next or prev step
       // console.log('onAfterMove')
-    }
-  }
-}
+    },
+  },
+})
 </script>
 
 <style>
@@ -209,13 +192,13 @@ body {
 }
 
 .step {
-	background-color: #41b883;
+  background-color: #41b883;
 }
 .step-1 {
-  grid-row: 1/4
+  grid-row: 1/4;
 }
 .step-2 {
-  grid-column: 2 / 4
+  grid-column: 2 / 4;
 }
 .step-3 {
   grid-row: 1 / 3;

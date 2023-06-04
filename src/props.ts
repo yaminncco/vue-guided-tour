@@ -1,3 +1,10 @@
+import { PropType } from 'vue'
+import { Step, PopoverOptions, Rect } from './types'
+
+export const position = ['top', 'left', 'right', 'bottom'] as const
+
+export const placement = ['start', 'center', 'end'] as const
+
 const overlayOptions = {
   allowOverlayClose: {
     type: Boolean,
@@ -11,7 +18,7 @@ const overlayOptions = {
     type: Boolean,
     default: true,
   },
-};
+}
 
 const popoverOptions = {
   arrow: {
@@ -23,28 +30,42 @@ const popoverOptions = {
     default: 0,
   },
   position: {
-    type: String,
-    default: "bottom",
-    validator: function (value) {
-      return ["top", "left", "right", "bottom"].indexOf(value) !== -1;
+    type: String as PropType<Exclude<PopoverOptions['position'], undefined>>,
+    default: 'bottom',
+    validator: function (value: any) {
+      return position.indexOf(value) !== -1
     },
   },
   placement: {
-    type: String,
-    default: "start",
-    validator: function (value) {
-      return ["start", "center", "end"].indexOf(value) !== -1;
+    type: String as PropType<Exclude<PopoverOptions['placement'], undefined>>,
+    default: 'start',
+    validator: function (value: any) {
+      return placement.indexOf(value) !== -1
     },
   },
   autoAdjust: {
     type: Boolean,
     default: true,
   },
-};
+}
 
-export const vgtProps = {
+const rectProp = {
+  type: Object as PropType<Rect>,
+  default() {
+    return {
+      top: 0,
+      left: 0,
+      width: 0,
+      height: 0,
+      bottom: 0,
+      right: 0,
+    }
+  },
+}
+
+export const vueGuidedTourProps = {
   steps: {
-    type: Array,
+    type: Array as PropType<Step[]>,
     required: true,
     default: () => [],
   },
@@ -78,34 +99,14 @@ export const vgtProps = {
   },
   ...popoverOptions,
   ...overlayOptions,
-};
+} as const
 
-export const overlayProps = {
-  rect: {
-    type: Object,
-    default() {
-      return {
-        top: 0,
-        left: 0,
-        width: 0,
-        height: 0,
-      };
-    },
-  },
+export const vueGuidedOverlayProps = {
+  rect: rectProp,
   ...overlayOptions,
-};
+} as const
 
-export const popoverProps = {
-  rect: {
-    type: Object,
-    default() {
-      return {
-        top: 0,
-        left: 0,
-        width: 0,
-        height: 0,
-      };
-    },
-  },
+export const vueGuidedPopoverProps = {
+  rect: rectProp,
   ...popoverOptions,
-};
+} as const
