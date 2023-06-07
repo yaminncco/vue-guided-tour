@@ -123,7 +123,7 @@ export default defineComponent({
   props: {
     ...vueGuidedTourProps,
   },
-  emits: ['update:stepIndex', 'afterStart', 'afterEnd', 'afterMove'],
+  emits: ['update:step-index', 'after-start', 'after-end', 'after-move'],
   setup(props, { emit }) {
     const {
       stepIndex,
@@ -148,9 +148,6 @@ export default defineComponent({
 
     const currentStepEl = ref<HTMLElement | null>(null)
     const prevEl = ref<HTMLElement | null>(null)
-
-    const active = ref(false)
-    const moving = ref(false)
 
     const { enableTrap } = useFocusTrap(vgtRef)
     let lastFocused: Element | null = null
@@ -196,33 +193,32 @@ export default defineComponent({
     })
 
     const onStart = (index = 0) => {
-      if (active.value) return
+      if (vgtOverlayRef.value?.isActive) return
       handleStepIndexChange(index)
     }
 
     const onNext = () => {
-      if (!active.value || moving.value) return
+      if (!vgtOverlayRef.value?.isHighlighted) return
       const index = currentStepIndex.value + 1
       if (index > steps.value.length - 1) return
       handleStepIndexChange(index)
     }
 
     const onPrev = () => {
-      if (!active.value || moving.value) return
+      if (!vgtOverlayRef.value?.isHighlighted) return
       const index = currentStepIndex.value - 1
       if (index < 0) return
       handleStepIndexChange(index)
     }
 
     const onEnd = () => {
-      if (!active.value || moving.value) return
+      if (!vgtOverlayRef.value?.isHighlighted) return
       const index = -1
       handleStepIndexChange(index)
     }
 
     const onMove = (index = 0) => {
-      if (index === currentStepIndex.value || !active.value || moving.value)
-        return
+      if (!vgtOverlayRef.value?.isHighlighted) return
       handleStepIndexChange(index)
     }
 
@@ -236,7 +232,7 @@ export default defineComponent({
       removeHighlight()
 
       currentStepIndex.value = index
-      emit('update:stepIndex', currentStepIndex.value)
+      emit('update:step-index', currentStepIndex.value)
 
       if (index === -1) {
         prevEl.value = null
@@ -255,22 +251,21 @@ export default defineComponent({
       const el = currentStepEl.value
       const move = !!prevEl.value
 
-      active.value = true
-      moving.value = true
-
       if (useOverlay.value) {
-        const startTour = () => {
+        const startTour = async () => {
           lastFocused = document.activeElement
-          vgtOverlayRef.value?.overlayStart(done)
+          await vgtOverlayRef.value?.start()
+          done()
         }
 
-        const moveTour = () => {
+        const moveTour = async () => {
           if (!el) return
           const newRect = getBoundingWithPadding(
             el.getBoundingClientRect(),
             currentStepPadding.value
           )
-          vgtOverlayRef.value?.overlayMoveTo(newRect, done)
+          await vgtOverlayRef.value?.highlight(newRect)
+          done()
         }
 
         move ? moveTour() : startTour()
@@ -288,39 +283,27 @@ export default defineComponent({
         }
         showPopover.value = true
         addHighlight(el)
-        moving.value = false
         nextTick(() => {
           enableTrap()
         })
-        emit(!move ? 'afterStart' : 'afterMove')
+        emit(!move ? 'after-start' : 'after-move')
       }
     }
 
-    const handleEndTour = () => {
+    const handleEndTour = async () => {
       showPopover.value = false
       removeHighlight()
       if (useOverlay.value) {
-        endTour()
-      } else {
-        done()
+        await vgtOverlayRef.value?.close()
       }
-
-      function endTour() {
-        vgtOverlayRef.value?.overlayClose(done)
-      }
-
-      function done() {
-        active.value = false
-        moving.value = false
-        ;(lastFocused as HTMLElement).focus({
-          preventScroll: true,
-        })
-        emit('afterEnd')
-      }
+      ;(lastFocused as HTMLElement).focus({
+        preventScroll: true,
+      })
+      emit('after-end')
     }
 
     const onKeyUp = (event: KeyboardEvent) => {
-      if (!active.value || !allowKeyboardEvent.value) return
+      if (!allowKeyboardEvent.value) return
       switch (event.key) {
         case 'ArrowLeft':
           onPrev()
@@ -359,7 +342,6 @@ export default defineComponent({
     return {
       vgtRef,
       vgtOverlayRef,
-      active,
       showPopover,
       currentStepIndex,
       currentStepRect,
