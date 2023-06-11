@@ -141,6 +141,7 @@ export default defineComponent({
     const $vgt = useVgt()
     const uid = Math.random().toString(36).substring(2)
 
+    const active = ref(false)
     const showPopover = ref(false)
 
     const currentStepIndex = ref(-1)
@@ -193,32 +194,37 @@ export default defineComponent({
     })
 
     const onStart = (index = 0) => {
-      if (vgtOverlayRef.value?.isActive) return
+      if (active.value) return
+      active.value = true
       handleStepIndexChange(index)
     }
 
     const onNext = () => {
-      if (!vgtOverlayRef.value?.isHighlighted) return
+      if (!active.value) return
+      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
       const index = currentStepIndex.value + 1
       if (index > steps.value.length - 1) return
       handleStepIndexChange(index)
     }
 
     const onPrev = () => {
-      if (!vgtOverlayRef.value?.isHighlighted) return
+      if (!active.value) return
+      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
       const index = currentStepIndex.value - 1
       if (index < 0) return
       handleStepIndexChange(index)
     }
 
     const onEnd = () => {
-      if (!vgtOverlayRef.value?.isHighlighted) return
+      if (!active.value) return
+      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
       const index = -1
       handleStepIndexChange(index)
     }
 
     const onMove = (index = 0) => {
-      if (!vgtOverlayRef.value?.isHighlighted) return
+      if (!active.value) return
+      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
       handleStepIndexChange(index)
     }
 
@@ -251,9 +257,10 @@ export default defineComponent({
       const el = currentStepEl.value
       const move = !!prevEl.value
 
+      lastFocused = document.activeElement
+
       if (useOverlay.value) {
         const startTour = async () => {
-          lastFocused = document.activeElement
           await vgtOverlayRef.value?.start()
           done()
         }
@@ -299,6 +306,7 @@ export default defineComponent({
       ;(lastFocused as HTMLElement).focus({
         preventScroll: true,
       })
+      active.value = false
       emit('after-end')
     }
 
