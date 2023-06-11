@@ -1,12 +1,12 @@
-import { App } from 'vue'
+import { Plugin } from 'vue'
 import VueGuidedTour from './components/Tour.vue'
 import VueGuidedOverlay from './components/Overlay.vue'
 import VueGuidedPopover from './components/Popover.vue'
 import { useRect, useVgt, vgtInjectionKey } from './use'
 import { Vgt } from './types'
 
-const vgtPlugin = {
-  install(app: App) {
+const vgtPlugin: Plugin = {
+  install(app) {
     const $vgt = {}
     app.config.globalProperties.$vgt = $vgt
     app.provide(vgtInjectionKey, $vgt)

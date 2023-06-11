@@ -1,6 +1,4 @@
----
-title: 'Config'
----
+# Config
 
 ## Props
 

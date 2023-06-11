@@ -1,6 +1,4 @@
----
-title: 'Getting Started'
----
+# Getting started
 
 ## Installation
 
@@ -14,6 +12,7 @@ npm i vue-guided-tour --save
 import { createApp } from 'vue'
 import App from './App.vue'
 import VueGuidedTour from 'vue-guided-tour'
+import 'vue-guided-tour/style.css'
 
 const app = createApp(App)
 app.use(VueGuidedTour)
@@ -51,11 +50,11 @@ this.$vgt.start(0)
 In setup function use `useVgt` composable
 
 ```js
-import { useVgt } from "vue-guided-tour";
+import { useVgt } from 'vue-guided-tour'
 
 setup() {
-  const $vgt = useVgt();
-  $vgt.start(0);
+  const $vgt = useVgt()
+  $vgt.start(0)
 }
 ```
 
