@@ -1,17 +1,15 @@
 <template>
-  <teleport to="body">
-    <div class="vue-guided-overlay" v-bind="$attrs">
-      <div class="vgo__wrapper" :style="overlayWrapperStyle">
-        <div
-          v-for="(_, key) in overlaysTransform"
-          :key="key"
-          :class="`vgo__overlay vgo__overlay--${key}`"
-          :style="overlaysStyle(key)"
-          @click="onClick"
-        />
-      </div>
+  <div class="vue-guided-overlay" v-bind="$attrs">
+    <div class="vgo__wrapper" :style="overlayWrapperStyle">
+      <div
+        v-for="(_, key) in overlaysTransform"
+        :key="key"
+        :class="`vgo__overlay vgo__overlay--${key}`"
+        :style="overlaysStyle(key)"
+        @click="onClick"
+      />
     </div>
-  </teleport>
+  </div>
 </template>
 
 <script lang="ts">
@@ -88,8 +86,6 @@ export default defineComponent({
     const moveDuration = 300
     const moveEase = 'cubic-bezier(.65,.05,.36,1)'
 
-    const roundedRadius = 0
-
     const isHighlighted = computed(() => {
       return !!(active.value && show.value && !timeout.value)
     })
@@ -104,7 +100,7 @@ export default defineComponent({
         position: 'absolute',
         top: '0px',
         left: '0px',
-        opacity: show.value ? '0.65' : '0',
+        opacity: show.value ? '1' : '0',
         visibility: show.value ? 'visible' : 'hidden',
         'pointer-events': allowInteraction.value ? 'none' : undefined,
         transition: `${fadeDuration}ms opacity, ${fadeDuration}ms visibility`,
@@ -124,7 +120,7 @@ export default defineComponent({
           css.right = '0px'
           css.transformOrigin = 'top right'
         } else {
-          if (key === 'center' && roundedRadius > 0) {
+          if (key === 'center') {
             css.transitionTimingFunction = transition.value
               ? moveEase
               : undefined
@@ -132,10 +128,16 @@ export default defineComponent({
               ? `${moveDuration}ms`
               : undefined
             css.transitionProperty = transition.value
-              ? 'transform, border-radius'
+              ? 'transform, border-width, border-radius'
               : undefined
-            css.borderRadius = `calc(${roundedRadius}px / ${overlay.scaleX}) / calc(${roundedRadius}px / ${overlay.scaleY})`
-            css.boxShadow = `0 0 0 9999px var(--vgo-bg)`
+            css.borderRadius = `calc(var(--vgo-border-radius) / ${overlay.scaleX}) / calc(var(--vgo-border-radius) / ${overlay.scaleY})`
+            css.boxShadow = `0 0 0 9999px var(--vgo-background)`
+            css.borderStyle = 'solid'
+            css.borderColor = 'var(--vgo-border-color)'
+            css.borderTopWidth = `calc(var(--vgo-border-width) / ${overlay.scaleY})`
+            css.borderBottomWidth = `calc(var(--vgo-border-width) / ${overlay.scaleY})`
+            css.borderLeftWidth = `calc(var(--vgo-border-width) / ${overlay.scaleX})`
+            css.borderRightWidth = `calc(var(--vgo-border-width) / ${overlay.scaleX})`
           }
           css.top = '0px'
           css.left = '0px'
@@ -278,6 +280,7 @@ export default defineComponent({
 
     const updateOverlaysTransform = () => {
       const current = getOverlaysTransform(currentRect)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { center, ...overlays } = overlaysTransform
       let overlayKey: keyof typeof overlays
       for (overlayKey in overlays) {
@@ -404,7 +407,7 @@ export default defineComponent({
                 timeout.value = false
                 resolve('')
               }, moveDuration)
-            }, 0)
+            }, 16)
           })
         })
       }
@@ -468,7 +471,11 @@ export default defineComponent({
 
 <style>
 .vue-guided-overlay {
-  --vgo-bg: #000;
+  --vgo-background: var(--vgt-overlay-background, rgba(0, 0, 0, 0.65));
+  --vgo-border-width: var(--vgt-overlay-border-width, none);
+  --vgo-border-color: var(--vgt-overlay-border-color, transparent);
+  --vgo-border-radius: var(--vgt-overlay-border-radius, none);
+
   position: absolute;
   top: 0;
   left: 0;
@@ -476,7 +483,7 @@ export default defineComponent({
   z-index: 99990 !important;
 }
 .vgo__overlay {
-  background-color: var(--vgo-bg);
+  box-sizing: border-box;
   pointer-events: auto;
 }
 .vgo__overlay--center {
