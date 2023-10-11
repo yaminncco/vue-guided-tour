@@ -6,7 +6,7 @@
     v-bind="$attrs"
   >
     <div
-      v-if="arrow"
+      v-if="rect && arrow"
       :class="`vgp__arrow vgp__arrow--${currentPosition}`"
       :style="arrowStyle"
     />
@@ -29,7 +29,13 @@ import {
   StyleValue,
 } from 'vue'
 import { vueGuidedPopoverProps } from '../props'
-import { useObserver, isPositionVertical, isOutView } from '../use'
+import {
+  useObserver,
+  useEvent,
+  isPositionVertical,
+  isOutView,
+  getWindowCenterRect,
+} from '../use'
 import { Rect, Position } from '../types'
 
 export default defineComponent({
@@ -45,6 +51,11 @@ export default defineComponent({
     const x = ref(0)
     const y = ref(0)
 
+    const computedRect = computed(() => {
+      const center = getWindowCenterRect()
+      return rect.value || center
+    })
+
     const popoverStyle = computed(() => {
       return {
         transform: `translateX(${x.value}px) translateY(${y.value}px)`,
@@ -57,27 +68,21 @@ export default defineComponent({
       y,
       popoverRef,
       currentPosition,
-      rect
-    )
-
-    watch(
-      () => rect.value,
-      () => {
-        nextTick(() => {
-          initPopover()
-        })
-      },
-      { deep: true, immediate: true }
+      computedRect
     )
 
     const initPopover = () => {
       if (!popoverRef.value) return
-      adjustCurrentPosition()
-      initPositionCoord()
-      nextTick(() => {
-        adjustPositionCoord()
-        initArrowPositionCoord()
-      })
+      if (!rect.value) {
+        initPositionCoord()
+      } else {
+        adjustCurrentPosition()
+        initPositionCoord()
+        nextTick(() => {
+          adjustPositionCoord()
+          initArrowPositionCoord()
+        })
+      }
     }
 
     useObserver(popoverRef, initPopover)
@@ -87,48 +92,52 @@ export default defineComponent({
       const { height: popoverHeight, width: popoverWidth } =
         popoverRef.value.getBoundingClientRect()
 
+      const { innerWidth: w, innerHeight: h } = window
+
       const position = currentPosition.value
       const placement = props.placement
 
       const offset = props.offset + arrowRect.value.height
 
-      let tx = 0
-      let ty = 0
+      let tx = w / 2 - popoverWidth / 2
+      let ty = h / 2 - popoverHeight / 2
 
-      switch (position) {
-        case 'bottom':
-          tx = rect.value.left
-          ty = rect.value.height + rect.value.top + offset
-          break
+      if (rect.value) {
+        switch (position) {
+          case 'bottom':
+            tx = rect.value.left
+            ty = rect.value.height + rect.value.top + offset
+            break
 
-        case 'top':
-          tx = rect.value.left
-          ty = rect.value.top - popoverHeight - offset
-          break
+          case 'top':
+            tx = rect.value.left
+            ty = rect.value.top - popoverHeight - offset
+            break
 
-        case 'right':
-          tx = rect.value.width + rect.value.left + offset
-          ty = rect.value.top
-          break
+          case 'right':
+            tx = rect.value.width + rect.value.left + offset
+            ty = rect.value.top
+            break
 
-        case 'left':
-          tx = rect.value.left - popoverWidth - offset
-          ty = rect.value.top
-          break
-      }
+          case 'left':
+            tx = rect.value.left - popoverWidth - offset
+            ty = rect.value.top
+            break
+        }
 
-      switch (placement) {
-        case 'end':
-          isPositionVertical(position)
-            ? (tx = tx - popoverWidth + rect.value.width)
-            : (ty = ty - popoverHeight + rect.value.height)
-          break
+        switch (placement) {
+          case 'end':
+            isPositionVertical(position)
+              ? (tx = tx - popoverWidth + rect.value.width)
+              : (ty = ty - popoverHeight + rect.value.height)
+            break
 
-        case 'center':
-          isPositionVertical(position)
-            ? (tx = tx - popoverWidth / 2 + rect.value.width / 2)
-            : (ty = ty - popoverHeight / 2 + rect.value.height / 2)
-          break
+          case 'center':
+            isPositionVertical(position)
+              ? (tx = tx - popoverWidth / 2 + rect.value.width / 2)
+              : (ty = ty - popoverHeight / 2 + rect.value.height / 2)
+            break
+        }
       }
 
       x.value = tx
@@ -153,11 +162,13 @@ export default defineComponent({
       const popoverRect = popoverRef.value.getBoundingClientRect()
       const isPopoverOutView = isOutView(popoverRect)
 
+      const rect = computedRect.value
+
       const outOffset = arrowRect.value.height + arrowRect.value.offset
-      const hTop = rect.value.top + outOffset
-      const hBottom = rect.value.height + rect.value.top - outOffset
-      const hLeft = rect.value.left + outOffset
-      const hRight = rect.value.width + rect.value.left - outOffset
+      const hTop = rect.top + outOffset
+      const hBottom = rect.height + rect.top - outOffset
+      const hLeft = rect.left + outOffset
+      const hRight = rect.width + rect.left - outOffset
 
       const hIsOutView = isOutView({
         top: hBottom,
@@ -201,11 +212,13 @@ export default defineComponent({
 
     const getSpaceSize = (): Record<Position, number> => {
       const { innerWidth: w, innerHeight: h } = window
+      const rect = computedRect.value
+
       return {
-        bottom: h - (rect.value.height + rect.value.top),
-        top: rect.value.top,
-        right: w - (rect.value.width + rect.value.left),
-        left: rect.value.left,
+        bottom: h - (rect.height + rect.top),
+        top: rect.top,
+        right: w - (rect.width + rect.left),
+        left: rect.left,
       }
     }
 
@@ -223,6 +236,18 @@ export default defineComponent({
         }
       )[0]
     }
+
+    watch(
+      () => rect.value,
+      () => {
+        nextTick(() => {
+          initPopover()
+        })
+      },
+      { deep: true, immediate: true }
+    )
+
+    useEvent(window, 'resize', initPopover)
 
     return {
       rect,

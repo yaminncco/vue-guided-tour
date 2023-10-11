@@ -49,20 +49,6 @@ const popoverOptions = {
   },
 }
 
-const rectProp = {
-  type: Object as PropType<Rect>,
-  default() {
-    return {
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-      bottom: 0,
-      right: 0,
-    }
-  },
-}
-
 export const vueGuidedTourProps = {
   steps: {
     type: Array as PropType<Step[]>,
@@ -102,11 +88,15 @@ export const vueGuidedTourProps = {
 } as const
 
 export const vueGuidedOverlayProps = {
-  rect: rectProp,
+  rect: {
+    type: Object as PropType<Rect>,
+  },
   ...overlayOptions,
 } as const
 
 export const vueGuidedPopoverProps = {
-  rect: rectProp,
+  rect: {
+    type: Object as PropType<Rect>,
+  },
   ...popoverOptions,
 } as const

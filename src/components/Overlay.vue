@@ -25,7 +25,7 @@ import {
   CSSProperties,
 } from 'vue'
 import { vueGuidedOverlayProps, position } from '../props'
-import { useEvent, rafThrottle } from '../use'
+import { useEvent, rafThrottle, getWindowCenterRect } from '../use'
 import { Rect } from '../types'
 
 export default defineComponent({
@@ -44,14 +44,7 @@ export default defineComponent({
     const timeout = ref(false)
     const transition = ref(false)
 
-    const defaultRect: Rect = {
-      top: 0,
-      left: 0,
-      width: 0,
-      height: 0,
-      right: 0,
-      bottom: 0,
-    }
+    const defaultRect = getWindowCenterRect()
     const currentRect: Rect = reactive({ ...defaultRect })
     const prevRect: Rect = reactive({ ...defaultRect })
 
@@ -330,9 +323,10 @@ export default defineComponent({
 
     const update = () => {
       if (!isHighlighted.value) return
+      const center = getWindowCenterRect()
       updateOverlayWrapper()
       nextTick(() => {
-        updateRect(currentRect, rect.value)
+        updateRect(currentRect, rect.value || center)
         updateOverlaysTransform()
         updateOverlayCenter()
       })
@@ -342,7 +336,7 @@ export default defineComponent({
       if (active.value) return
       active.value = true
       return new Promise<'start'>((resolve) => {
-        handleEvent(rect.value).then(() => {
+        handleEvent(rect.value || defaultRect).then(() => {
           resolve('start')
         })
       })

@@ -50,3 +50,15 @@ export const rafThrottle = <F extends (...args: any[]) => void>(fn: F) => {
     })
   }
 }
+
+export const getWindowCenterRect = () => {
+  const { innerWidth: w, innerHeight: h } = window
+  return {
+    top: h / 2,
+    left: w / 2,
+    right: w / 2,
+    bottom: h / 2,
+    width: 0,
+    height: 0,
+  }
+}

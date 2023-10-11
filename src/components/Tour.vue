@@ -119,6 +119,7 @@ import {
   useFocusTrap,
   isInView,
   getBoundingWithPadding,
+  getWindowCenterRect,
 } from '../use'
 import { Step, TourApi } from '../types'
 
@@ -135,7 +136,6 @@ export default defineComponent({
   emits: ['update:step-index', 'after-start', 'after-end', 'after-move'],
   setup(props, { emit }) {
     const {
-      stepIndex,
       steps,
       allowKeyboardEvent,
       useOverlay,
@@ -154,7 +154,7 @@ export default defineComponent({
     const showPopover = ref(false)
 
     const currentStepIndex = ref(-1)
-    currentStepIndex.value = stepIndex.value
+    const prevStepIndex = ref(-1)
 
     const currentStepEl = ref<HTMLElement | null>(null)
     const prevEl = ref<HTMLElement | null>(null)
@@ -166,7 +166,9 @@ export default defineComponent({
 
     const { rect } = useRect(currentStepEl)
     const currentStepRect = computed(() => {
-      return getBoundingWithPadding(rect, currentStepPadding.value)
+      return currentStepEl.value
+        ? getBoundingWithPadding(rect, currentStepPadding.value)
+        : undefined
     })
     const currentStepPadding = computed(() => {
       return currentStep.value?.padding ?? padding.value
@@ -243,10 +245,10 @@ export default defineComponent({
       if (index === currentStepIndex.value) return
 
       const el = getHighlightEl(index, steps.value)
-      if (!el && index !== -1) return
       showPopover.value = false
       removeHighlight()
 
+      prevStepIndex.value = currentStepIndex.value
       currentStepIndex.value = index
       emit('update:step-index', currentStepIndex.value)
 
@@ -255,17 +257,15 @@ export default defineComponent({
         currentStepEl.value = null
         handleEndTour()
       } else {
-        if (el) {
-          prevEl.value = currentStepEl.value
-          currentStepEl.value = el as HTMLElement
-          handleMoveTour()
-        }
+        prevEl.value = currentStepEl.value
+        currentStepEl.value = el as HTMLElement
+        handleMoveTour()
       }
     }
 
     const handleMoveTour = () => {
       const el = currentStepEl.value
-      const move = !!prevEl.value
+      const move = !!(prevStepIndex.value != -1)
 
       lastFocused = document.activeElement
 
@@ -276,11 +276,12 @@ export default defineComponent({
         }
 
         const moveTour = async () => {
-          if (!el) return
-          const newRect = getBoundingWithPadding(
-            el.getBoundingClientRect(),
-            currentStepPadding.value
-          )
+          const newRect = el
+            ? getBoundingWithPadding(
+                el.getBoundingClientRect(),
+                currentStepPadding.value
+              )
+            : getWindowCenterRect()
           await vgtOverlayRef.value?.highlight(newRect)
           done()
         }
@@ -293,13 +294,16 @@ export default defineComponent({
       }
 
       function done() {
-        if (!el) return
-        const inView = isInView(el.getBoundingClientRect())
-        if (!inView) {
-          el.scrollIntoView({ block: 'center' })
+        if (el) {
+          const inView = isInView(el.getBoundingClientRect())
+          if (!inView) {
+            el.scrollIntoView({ block: 'center' })
+          }
+          addHighlight(el)
         }
+
         showPopover.value = true
-        addHighlight(el)
+
         nextTick(() => {
           enableTrap()
         })
@@ -385,10 +389,7 @@ function useHightlight() {
       return null
     const targetValue = steps[index].target
     const el = document.querySelector(`${targetValue}`)
-    if (!targetValue) {
-      console.warn(`[vue-guided-tour]: Target is required in step ${index}`)
-      return null
-    } else if (!el) {
+    if (targetValue && !el) {
       console.warn(
         `[vue-guided-tour]: Target to highlight "${targetValue}" not found`
       )

@@ -36,7 +36,7 @@ export interface PopoverOptions {
 }
 
 export interface Step {
-  target: string
+  target?: string
   title?: string
   content?: string
   slot?: string
