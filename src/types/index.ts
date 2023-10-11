@@ -39,6 +39,7 @@ export interface Step {
   target: string
   title?: string
   content?: string
+  slot?: string
   padding?: number
   popover?: PopoverOptions
   overlay?: OverlayOptions

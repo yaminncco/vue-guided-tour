@@ -21,35 +21,20 @@
     @afterMove="onAfterMove"
   >
     <!--
-    <template #content="{ stepIndex }">
-      <div id="hello-world-title">
-        step {{ stepIndex }}
-      </div>
+    <template #step-1="{ step, stepIndex }">
+      <h3 id="hello-world-title">{{ stepIndex }}. {{ step.title }}</h3>
+      <p id="hello-world-desc">{{ step.content }}</p>
+    </template>
+    <template #content="{ step, stepIndex }">
+      {{ step }} {{ stepIndex }}
     </template>
     <template #close>
-      <button @click="$vgt.end">
-        x
-      </button>
+      <button @click="$vgt.end">x</button>
     </template>
     <template #nav="{ isFirstStep, isLastStep }">
-      <button
-        v-if="!isFirstStep"
-        @click="$vgt.prev"
-      >
-        Prev
-      </button>
-      <button
-        v-if="isLastStep"
-        @click="$vgt.end"
-      >
-        End
-      </button>
-      <button
-        v-else
-        @click="$vgt.next"
-      >
-        Next
-      </button>
+      <button v-if="!isFirstStep" @click="$vgt.prev">Prev</button>
+      <button v-if="isLastStep" @click="$vgt.end">End</button>
+      <button v-else @click="$vgt.next">Next</button>
     </template>
     -->
   </vue-guided-tour>
@@ -66,11 +51,13 @@ export default defineComponent({
     const steps = ref<VueGuidedTourProps['steps']>([
       {
         target: '.step-1',
+        slot: 'step-1',
         title: 'Hello world',
         content: 'Lorem ipsum dolor sit, amet consectetur adipisicing elit.',
         popover: {
           placement: 'start',
           position: 'right',
+          id: 'hello-world',
         },
       },
       {

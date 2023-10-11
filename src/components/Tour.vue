@@ -14,7 +14,10 @@
       <template
         v-if="
           showPopover &&
-          (currentStep?.title || currentStep?.content || $slots.content)
+          (currentStep?.title ||
+            currentStep?.content ||
+            (currentStep?.slot && $slots[currentStep.slot]) ||
+            $slots.content)
         "
       >
         <transition name="popover-appear" appear>
@@ -37,7 +40,13 @@
               </button>
             </slot>
             <div class="vgt__body">
-              <slot name="content" v-bind="{ stepIndex: currentStepIndex }">
+              <slot
+                :name="currentStep?.slot || 'content'"
+                v-bind="{
+                  step: currentStep?._step,
+                  stepIndex: currentStepIndex,
+                }"
+              >
                 <h3
                   v-if="currentStep?.title"
                   :id="currentStep.popover['aria-labelledby']"
@@ -184,6 +193,7 @@ export default defineComponent({
         overlay: {
           ...stepObj.overlay,
         },
+        _step: stepObj,
       }
     })
     const isFirstStep = computed(() => {
