@@ -1,11 +1,18 @@
 <template>
   <div class="vue-guided-overlay" v-bind="$attrs">
     <div class="vgo__wrapper" :style="overlayWrapperStyle">
+      <div style="opacity: var(--vgo-opacity)">
+        <div
+          v-for="key in overlayKeys"
+          :key="key"
+          :class="`vgo__overlay vgo__overlay--${key}`"
+          :style="overlaysStyle(key)"
+          @click="onClick"
+        />
+      </div>
       <div
-        v-for="(_, key) in overlaysTransform"
-        :key="key"
-        :class="`vgo__overlay vgo__overlay--${key}`"
-        :style="overlaysStyle(key)"
+        :class="`vgo__overlay vgo__overlay--center`"
+        :style="overlaysStyle('center')"
         @click="onClick"
       />
     </div>
@@ -79,6 +86,8 @@ export default defineComponent({
     const moveDuration = 300
     const moveEase = 'cubic-bezier(.65,.05,.36,1)'
 
+    const scaleSize = 200
+
     const isHighlighted = computed(() => {
       return !!(active.value && show.value && !timeout.value)
     })
@@ -123,14 +132,20 @@ export default defineComponent({
             css.transitionProperty = transition.value
               ? 'transform, border-width, border-radius'
               : undefined
-            css.borderRadius = `calc(var(--vgo-border-radius) / ${overlay.scaleX}) / calc(var(--vgo-border-radius) / ${overlay.scaleY})`
-            css.boxShadow = `0 0 0 9999px var(--vgo-background)`
             css.borderStyle = 'solid'
             css.borderColor = 'var(--vgo-border-color)'
-            css.borderTopWidth = `calc(var(--vgo-border-width) / ${overlay.scaleY})`
-            css.borderBottomWidth = `calc(var(--vgo-border-width) / ${overlay.scaleY})`
-            css.borderLeftWidth = `calc(var(--vgo-border-width) / ${overlay.scaleX})`
-            css.borderRightWidth = `calc(var(--vgo-border-width) / ${overlay.scaleX})`
+            css.borderTopWidth = `calc(var(--vgo-border-width) / ${
+              overlay.scaleY || 1
+            })`
+            css.borderBottomWidth = `calc(var(--vgo-border-width) / ${
+              overlay.scaleY || 1
+            })`
+            css.borderLeftWidth = `calc(var(--vgo-border-width) / ${
+              overlay.scaleX || 1
+            })`
+            css.borderRightWidth = `calc(var(--vgo-border-width) / ${
+              overlay.scaleX || 1
+            })`
           }
           css.top = '0px'
           css.left = '0px'
@@ -254,8 +269,8 @@ export default defineComponent({
         height,
         x: left + window.scrollX,
         y: top + window.scrollY,
-        scaleX: 1,
-        scaleY: 1,
+        scaleX: width ? 1 : 0,
+        scaleY: height ? 1 : 0,
       }
 
       return {
@@ -290,8 +305,8 @@ export default defineComponent({
     const updateOverlayCenter = () => {
       const current = getOverlayCenterTransform(currentRect)
       const overlay = overlaysTransform['center']
-      overlay.width = current.width
-      overlay.height = current.height
+      overlay.width = current.width || scaleSize
+      overlay.height = current.height || scaleSize
       overlay.x = current.x
       overlay.y = current.y
       overlay.scaleX = current.scaleX
@@ -304,8 +319,10 @@ export default defineComponent({
       const overlay = overlaysTransform['center']
       overlay.x += from.x - to.x
       overlay.y += from.y - to.y
-      overlay.scaleX = from.width / to.width
-      overlay.scaleY = from.height / to.height
+      overlay.scaleX = to.width ? from.width / to.width : from.width / scaleSize
+      overlay.scaleY = to.height
+        ? from.height / to.height
+        : from.height / scaleSize
     }
 
     const resetAllOverlays = () => {
@@ -450,7 +467,7 @@ export default defineComponent({
 
     return {
       isActive: computed(() => active.value),
-      overlaysTransform,
+      overlayKeys: computed(() => overlayKeys.filter((key) => key != 'center')),
       overlaysStyle,
       overlayWrapperStyle,
       isHighlighted,
@@ -465,10 +482,10 @@ export default defineComponent({
 
 <style>
 .vue-guided-overlay {
-  --vgo-background: var(--vgt-overlay-background, rgba(0, 0, 0, 0.65));
-  --vgo-border-width: var(--vgt-overlay-border-width, none);
-  --vgo-border-color: var(--vgt-overlay-border-color, transparent);
-  --vgo-border-radius: var(--vgt-overlay-border-radius, none);
+  --vgo-background: var(--vgt-overlay-background, #000);
+  --vgo-opacity: var(--vgt-overlay-opacity, 0.65);
+  --vgo-border-width: var(--vgt-overlay-border-width, 0px);
+  --vgo-border-color: var(--vgt-overlay-border-color, #ccc);
 
   position: absolute;
   top: 0;
@@ -479,6 +496,7 @@ export default defineComponent({
 .vgo__overlay {
   box-sizing: border-box;
   pointer-events: auto;
+  background-color: var(--vgo-background);
 }
 .vgo__overlay--center {
   pointer-events: none !important;
