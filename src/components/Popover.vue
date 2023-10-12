@@ -46,7 +46,7 @@ export default defineComponent({
   },
   setup(props) {
     const popoverRef = ref<HTMLElement | null>(null)
-    const { rect, position } = toRefs(props)
+    const { rect, position, width } = toRefs(props)
     const currentPosition = ref(position.value)
     const x = ref(0)
     const y = ref(0)
@@ -56,8 +56,10 @@ export default defineComponent({
       return rect.value || center
     })
 
-    const popoverStyle = computed(() => {
+    const popoverStyle = computed<StyleValue>(() => {
       return {
+        'max-width':
+          typeof width.value === 'string' ? width.value : `${width.value}px`,
         transform: `translateX(${x.value}px) translateY(${y.value}px)`,
       }
     })
@@ -389,8 +391,7 @@ function useArrow(
   position: fixed;
   top: 0;
   left: 0;
-  min-width: 250px;
-  max-width: 300px;
+  width: 100%;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   z-index: 99999 !important;
 }

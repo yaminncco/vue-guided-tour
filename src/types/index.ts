@@ -32,6 +32,7 @@ export interface PopoverOptions {
   offset?: number
   arrow?: boolean
   autoAdjust?: boolean
+  width?: string | number
   id?: string
 }
 

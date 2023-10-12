@@ -47,6 +47,10 @@ const popoverOptions = {
     type: Boolean,
     default: true,
   },
+  width: {
+    type: [String, Number],
+    default: 250,
+  },
 }
 
 export const vueGuidedTourProps = {

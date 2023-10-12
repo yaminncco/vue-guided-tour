@@ -28,6 +28,7 @@
             :position="position"
             :placement="placement"
             :auto-adjust="autoAdjust"
+            :width="width"
             v-bind="{ ...currentStep?.popover }"
           >
             <slot v-if="closeBtn" name="close">
