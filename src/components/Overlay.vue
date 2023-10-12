@@ -405,20 +405,21 @@ export default defineComponent({
       function animate() {
         return new Promise((resolve) => {
           timeout.value = true
-          updateOverlayWrapper()
           nextTick(() => {
             updateOverlayCenter()
             invertOverlayCenter()
-            setTimeout(() => {
-              transition.value = true
-              updateOverlaysTransform()
-              updateOverlayCenter()
-              setTimeout(() => {
-                transition.value = false
-                timeout.value = false
-                resolve('')
-              }, moveDuration)
-            }, 16)
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                transition.value = true
+                updateOverlaysTransform()
+                updateOverlayCenter()
+                setTimeout(() => {
+                  transition.value = false
+                  timeout.value = false
+                  resolve('')
+                }, moveDuration)
+              })
+            })
           })
         })
       }
@@ -429,9 +430,12 @@ export default defineComponent({
           show.value = false
           promise = fadeOut()
         } else {
-          updateRect(prevRect, currentRect)
-          updateRect(currentRect, newRect)
-
+          updateOverlayWrapper()
+          nextTick(() => {
+            updateOverlaysTransform()
+            updateRect(prevRect, currentRect)
+            updateRect(currentRect, newRect)
+          })
           show.value = true
           promise = move ? animate() : fadeIn()
         }
