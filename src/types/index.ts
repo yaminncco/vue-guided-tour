@@ -44,6 +44,8 @@ export interface Step {
   padding?: number
   popover?: PopoverOptions
   overlay?: OverlayOptions
+  onBeforeNext?: () => any
+  onBeforePrev?: () => any
 }
 
 export interface TourApi {

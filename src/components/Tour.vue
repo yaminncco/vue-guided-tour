@@ -212,19 +212,37 @@ export default defineComponent({
       handleStepIndexChange(index)
     }
 
-    const onNext = () => {
+    const onNext = async () => {
       if (!active.value) return
       if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
       const index = currentStepIndex.value + 1
       if (index > steps.value.length - 1) return
+
+      const onBeforeNext = currentStep.value?.onBeforeNext
+      if (onBeforeNext) {
+        const continueTour = await onBeforeNext()
+        if (continueTour === false) {
+          return
+        }
+      }
+
       handleStepIndexChange(index)
     }
 
-    const onPrev = () => {
+    const onPrev = async () => {
       if (!active.value) return
       if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
       const index = currentStepIndex.value - 1
       if (index < 0) return
+
+      const onBeforePrev = currentStep.value?.onBeforePrev
+      if (onBeforePrev) {
+        const continueTour = await onBeforePrev()
+        if (continueTour === false) {
+          return
+        }
+      }
+
       handleStepIndexChange(index)
     }
 
