@@ -107,13 +107,22 @@ Popover placement, can be: 'start', 'center', 'end'.
 
 Whether to adjust popover to a new position if there is no space.
 
+#### width
+
+- Type: `String | Number`
+- Default: `250`
+
+Popover width.
+
+
 ## Step Properties
 
 ```js
 {
-  target: '.step-1', // Target selector
+  target: '.step-1', // Target selector (highlight the center of screen if not defined)
   title: 'Hello world', // Step title
   content: 'Step content', // Step content
+  slot: 'dynamicSlotName', // Step slot for dynamic content
   padding: 0,
   popover: {
     position: 'bottom',
@@ -121,8 +130,17 @@ Whether to adjust popover to a new position if there is no space.
     offset: 0,
     arrow: true,
     autoAdjust: true
+    width: '250px',
     id: 'hello-world', // Used for aria-labelledby & aria-describedby
     // 'aria-label': 'Hello world', // When title is undefined
+  },
+  onBeforeNext: () => {
+    // perform actions
+    // return false to prevent the tour from moving to the next step
+  }
+  onBeforePrev: () => {
+    // perform actions
+    // return false to prevent the tour from moving to the previous step
   }
 }
 ```
@@ -169,10 +187,13 @@ Emits after the tour move to the next or prev step.
 
 ## Slots
 
-The available slots: `#content`, `#close`, `#nav`
+The available slots: `#[dynamicSlotName]`, `#content`, `#close`, `#nav`
 
-```vue
+```html
 <vue-guided-tour>
+  <template #[dynamicSlotName]="{ stepIndex, step }">
+    <div>step {{ stepIndex }}, {{ step }}</div>
+  </template>
   <template #content="{ stepIndex }">
     <div>step {{ stepIndex }}</div>
   </template>

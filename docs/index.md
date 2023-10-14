@@ -2,17 +2,19 @@
 title: 'Home'
 ---
 
-# vue-guided-tour
+<div class="step-introduction">
 
-<div class="introduction">
+# vue-guided-tour
 
 ### A vue.js 3 component to guide your visitors.
 
-<div class="installation">
+<div class="step-installation">
 
 ```bash
 npm i vue-guided-tour --save
 ```
+
+</div>
 
 </div>
 
@@ -25,5 +27,3 @@ const start = () => {
   $vgt?.start?.(0)
 }
 </script>
-
-</div>

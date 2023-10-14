@@ -8,6 +8,8 @@ npm i vue-guided-tour --save
 
 ## Usage
 
+<div class="step-usage">
+
 ```js
 import { createApp } from 'vue'
 import App from './App.vue'
@@ -57,6 +59,8 @@ setup() {
   $vgt.start(0)
 }
 ```
+
+</div>
 
 ::: warning
 if prop [`name`](config.md#name) is set then you start the tour `$vgt[name].start(0)`
