@@ -27,6 +27,7 @@ import {
   ExtractPropTypes,
   Ref,
   StyleValue,
+  ComputedRef,
 } from 'vue'
 import { vueGuidedPopoverProps } from '../props'
 import {
@@ -50,6 +51,7 @@ export default defineComponent({
     const currentPosition = ref(position.value)
     const x = ref(0)
     const y = ref(0)
+    const isPositionInside = ref(false)
 
     const computedRect = computed(() => {
       const center = getWindowCenterRect()
@@ -64,12 +66,17 @@ export default defineComponent({
       }
     })
 
+    const arrowPosition = computed(() => {
+      const reverse = getReversePosition(currentPosition.value)
+      return isPositionInside.value ? reverse : currentPosition.value
+    })
+
     const { arrowStyle, arrowRect, initArrowPositionCoord } = useArrow(
       props,
       x,
       y,
       popoverRef,
-      currentPosition,
+      arrowPosition,
       computedRect
     )
 
@@ -78,6 +85,7 @@ export default defineComponent({
       if (!rect.value) {
         initPositionCoord()
       } else {
+        adjustIsPositionInside()
         adjustCurrentPosition()
         initPositionCoord()
         nextTick(() => {
@@ -86,8 +94,6 @@ export default defineComponent({
         })
       }
     }
-
-    useObserver(popoverRef, initPopover)
 
     const initPositionCoord = () => {
       if (!popoverRef.value) return
@@ -108,21 +114,33 @@ export default defineComponent({
         switch (position) {
           case 'bottom':
             tx = rect.value.left
-            ty = rect.value.height + rect.value.top + offset
+            ty =
+              rect.value.height +
+              rect.value.top +
+              (isPositionInside.value ? -popoverHeight - offset : offset)
             break
 
           case 'top':
             tx = rect.value.left
-            ty = rect.value.top - popoverHeight - offset
+            ty =
+              rect.value.top -
+              popoverHeight -
+              (isPositionInside.value ? -popoverHeight - offset : offset)
             break
 
           case 'right':
-            tx = rect.value.width + rect.value.left + offset
+            tx =
+              rect.value.width +
+              rect.value.left +
+              (isPositionInside.value ? -popoverWidth - offset : offset)
             ty = rect.value.top
             break
 
           case 'left':
-            tx = rect.value.left - popoverWidth - offset
+            tx =
+              rect.value.left -
+              popoverWidth -
+              (isPositionInside.value ? -popoverWidth - offset : offset)
             ty = rect.value.top
             break
         }
@@ -146,6 +164,23 @@ export default defineComponent({
       y.value = ty
     }
 
+    const adjustIsPositionInside = () => {
+      let isAvailable = false
+      if (!props.autoAdjust) {
+        isAvailable = isSpaceAvailable()[props.position]
+      } else {
+        isAvailable = Object.values(isSpaceAvailable()).some((a) => {
+          return a
+        })
+      }
+
+      if (!isAvailable) {
+        isPositionInside.value = true
+      } else {
+        isPositionInside.value = false
+      }
+    }
+
     const adjustCurrentPosition = () => {
       if (!props.autoAdjust) return
       if (checkAvailableSpace(props.position)) {
@@ -153,7 +188,11 @@ export default defineComponent({
       } else {
         if (checkAvailableSpace(currentPosition.value)) return
         const bestPosition = getBestPosition()
-        currentPosition.value = bestPosition
+        if (isPositionInside.value) {
+          currentPosition.value = props.position
+        } else {
+          currentPosition.value = bestPosition
+        }
       }
     }
 
@@ -200,6 +239,14 @@ export default defineComponent({
       }
     }
 
+    const isSpaceAvailable = () => {
+      const spaces = {}
+      for (const position of ['top', 'left', 'right', 'bottom'] as Position[]) {
+        Object.assign(spaces, { [position]: checkAvailableSpace(position) })
+      }
+      return spaces as Record<Position, boolean>
+    }
+
     const checkAvailableSpace = (position: Position) => {
       if (!popoverRef.value) return
       const size = getSpaceSize()[position]
@@ -226,17 +273,29 @@ export default defineComponent({
 
     const getBestPosition = (): Position => {
       const positions = getSpaceSize()
-      return (Object.keys(positions) as Array<keyof typeof positions>).sort(
-        (a, b) => {
-          if (checkAvailableSpace(a)) {
-            return -1
-          }
-          if (checkAvailableSpace(b)) {
-            return 1
-          }
-          return positions[b] - positions[a]
+      const order: Position[] = ['top', 'right', 'left', 'bottom']
+      return order.sort((a, b) => {
+        if (checkAvailableSpace(a)) {
+          return -1
         }
-      )[0]
+        if (checkAvailableSpace(b)) {
+          return 1
+        }
+        return positions[b] - positions[a]
+      })[0]
+    }
+
+    const getReversePosition = (position: Position): Position => {
+      switch (position) {
+        case 'top':
+          return 'bottom'
+        case 'bottom':
+          return 'top'
+        case 'left':
+          return 'right'
+        case 'right':
+          return 'left'
+      }
     }
 
     watch(
@@ -246,9 +305,10 @@ export default defineComponent({
           initPopover()
         })
       },
-      { deep: true, immediate: true }
+      { immediate: true }
     )
 
+    useObserver(popoverRef, initPopover)
     useEvent(window, 'resize', initPopover)
 
     return {
@@ -266,7 +326,7 @@ function useArrow(
   popoverX: Ref<number>,
   popoverY: Ref<number>,
   popoverRef: Ref<HTMLElement | null>,
-  position: Ref<Position>,
+  position: ComputedRef<Position>,
   rect: Ref<Rect>
 ) {
   const x = ref(0)
