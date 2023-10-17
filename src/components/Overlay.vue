@@ -10,11 +10,7 @@
           @click="onClick"
         />
       </div>
-      <div
-        :class="`vgo__overlay vgo__overlay--center`"
-        :style="overlaysStyle('center')"
-        @click="onClick"
-      />
+      <div :class="`vgo__hightlight`" :style="overlaysStyle('center')" />
     </div>
   </div>
 </template>
@@ -41,13 +37,10 @@ export default defineComponent({
   props: {
     ...vueGuidedOverlayProps,
   },
-  expose: ['start', 'close', 'highlight', 'isActive', 'isHighlighted'],
+  expose: ['highlight', 'isTimeout'],
   emits: ['overlay-click'],
   setup(props, { emit }) {
-    const { rect, allowInteraction, allowOverlayClose, allowEscClose } =
-      toRefs(props)
-    const active = ref(false)
-    const show = ref(false)
+    const { rect, allowInteraction } = toRefs(props)
     const timeout = ref(false)
     const transition = ref(false)
 
@@ -82,15 +75,10 @@ export default defineComponent({
       ) as Record<(typeof overlayKeys)[number], typeof defaultOverlayTransform>
     )
 
-    const fadeDuration = 300
     const moveDuration = 300
     const moveEase = 'cubic-bezier(.65,.05,.36,1)'
 
     const scaleSize = 200
-
-    const isHighlighted = computed(() => {
-      return !!(active.value && show.value && !timeout.value)
-    })
 
     const overlayWrapperStyle = computed<StyleValue>(() => {
       const hasHScroll = document.body.scrollWidth > document.body.clientWidth
@@ -102,10 +90,7 @@ export default defineComponent({
         position: 'absolute',
         top: '0px',
         left: '0px',
-        opacity: show.value ? '1' : '0',
-        visibility: show.value ? 'visible' : 'hidden',
         'pointer-events': allowInteraction.value ? 'none' : undefined,
-        transition: `${fadeDuration}ms opacity, ${fadeDuration}ms visibility`,
       }
     })
 
@@ -201,11 +186,6 @@ export default defineComponent({
         overlayWrapper.width = fullWidth
         overlayWrapper.height = fullHeight
       })
-    }
-
-    const resetOverlayWrapper = () => {
-      overlayWrapper.width = 0
-      overlayWrapper.height = 0
     }
 
     const getOverlaysTransform = ({
@@ -325,21 +305,8 @@ export default defineComponent({
         : from.height / scaleSize
     }
 
-    const resetAllOverlays = () => {
-      let overlayKey: keyof typeof overlaysTransform
-      for (overlayKey in overlaysTransform) {
-        const overlay = overlaysTransform[overlayKey]
-        overlay.width = defaultOverlayTransform.width
-        overlay.height = defaultOverlayTransform.height
-        overlay.x = defaultOverlayTransform.x
-        overlay.y = defaultOverlayTransform.y
-        overlay.scaleX = defaultOverlayTransform.scaleX
-        overlay.scaleY = defaultOverlayTransform.scaleY
-      }
-    }
-
     const update = () => {
-      if (!isHighlighted.value) return
+      if (timeout.value) return
       const center = getWindowCenterRect()
       updateOverlayWrapper()
       nextTick(() => {
@@ -349,59 +316,8 @@ export default defineComponent({
       })
     }
 
-    const start = () => {
-      if (active.value) return
-      active.value = true
-      return new Promise<'start'>((resolve) => {
-        handleEvent(rect.value || defaultRect).then(() => {
-          resolve('start')
-        })
-      })
-    }
-
-    const close = () => {
-      if (!isHighlighted.value) return
-      return new Promise<'close'>((resolve) => {
-        handleEvent().then(() => {
-          active.value = false
-          resolve('close')
-        })
-      })
-    }
-
     const highlight = (newRect: Rect) => {
-      if (!isHighlighted.value || !newRect) return
-      return new Promise<'highlight'>((resolve) => {
-        handleEvent(newRect, true).then(() => {
-          resolve('highlight')
-        })
-      })
-    }
-
-    const handleEvent = (newRect?: Rect, move = false) => {
-      function fadeIn() {
-        return new Promise((resolve) => {
-          update()
-          timeout.value = true
-          setTimeout(() => {
-            timeout.value = false
-            resolve('')
-          }, fadeDuration)
-        })
-      }
-
-      function fadeOut() {
-        return new Promise((resolve) => {
-          timeout.value = true
-          setTimeout(() => {
-            resetOverlayWrapper()
-            resetAllOverlays()
-            timeout.value = false
-            resolve('')
-          }, fadeDuration)
-        })
-      }
-
+      if (timeout.value || !newRect) return
       function animate() {
         return new Promise((resolve) => {
           timeout.value = true
@@ -424,23 +340,15 @@ export default defineComponent({
         })
       }
 
-      return new Promise((resolve) => {
-        let promise
-        if (!newRect) {
-          show.value = false
-          promise = fadeOut()
-        } else {
-          updateOverlayWrapper()
-          nextTick(() => {
-            updateOverlaysTransform()
-            updateRect(prevRect, currentRect)
-            updateRect(currentRect, newRect)
-          })
-          show.value = true
-          promise = move ? animate() : fadeIn()
-        }
-        promise.then(() => {
-          resolve('')
+      return new Promise<'highlight'>((resolve) => {
+        updateOverlayWrapper()
+        nextTick(() => {
+          updateOverlaysTransform()
+          updateRect(prevRect, currentRect)
+          updateRect(currentRect, newRect)
+        })
+        animate().then(() => {
+          resolve('highlight')
         })
       })
     }
@@ -448,36 +356,28 @@ export default defineComponent({
     const onUpdate = rafThrottle(update)
 
     const onClick = () => {
-      if (!allowOverlayClose.value) return
       emit('overlay-click')
-      close()
-    }
-
-    const onKeyUp = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape' || !allowEscClose.value) return
-      emit('overlay-click')
-      close()
     }
 
     watch(
-      () => rect.value,
+      rect,
       () => {
         onUpdate()
+      },
+      {
+        immediate: true,
       }
     )
     useEvent(window, 'scroll', onUpdate)
     useEvent(window, 'resize', onUpdate)
-    useEvent(window, 'keyup', onKeyUp)
 
     return {
-      isActive: computed(() => active.value),
       overlayKeys: computed(() => overlayKeys.filter((key) => key != 'center')),
       overlaysStyle,
       overlayWrapperStyle,
-      isHighlighted,
+      overlaysTransform,
+      isTimeout: computed(() => timeout.value),
       onClick,
-      start,
-      close,
       highlight,
     }
   },
@@ -502,8 +402,7 @@ export default defineComponent({
   pointer-events: auto;
   background-color: var(--vgo-background);
 }
-.vgo__overlay--center {
-  pointer-events: none !important;
-  background-color: transparent !important;
+.vgo__hightlight {
+  box-sizing: border-box;
 }
 </style>

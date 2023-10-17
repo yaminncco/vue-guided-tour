@@ -6,14 +6,6 @@ export const position = ['top', 'left', 'right', 'bottom'] as const
 export const placement = ['start', 'center', 'end'] as const
 
 const overlayOptions = {
-  allowOverlayClose: {
-    type: Boolean,
-    default: true,
-  },
-  allowEscClose: {
-    type: Boolean,
-    default: true,
-  },
   allowInteraction: {
     type: Boolean,
     default: true,
@@ -80,6 +72,14 @@ export const vueGuidedTourProps = {
     default: true,
   },
   allowKeyboardEvent: {
+    type: Boolean,
+    default: true,
+  },
+  allowOverlayClose: {
+    type: Boolean,
+    default: true,
+  },
+  allowEscClose: {
     type: Boolean,
     default: true,
   },

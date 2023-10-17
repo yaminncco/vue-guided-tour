@@ -1,27 +1,33 @@
 <template>
   <teleport to="body">
     <div ref="vgtRef" class="vue-guided-tour" v-bind="$attrs">
-      <vgt-overlay
-        v-if="useOverlay"
-        ref="vgtOverlayRef"
-        :rect="currentStepRect"
-        :allow-overlay-close="allowOverlayClose"
-        :allow-esc-close="allowEscClose"
-        :allow-interaction="allowInteraction"
-        v-bind="{ ...currentStep?.overlay }"
-        @overlay-click="onOverlayClick"
-      />
+      <template v-if="useOverlay">
+        <transition
+          name="overlay-fade"
+          @after-enter="afterMove"
+          @after-leave="afterLeave"
+        >
+          <vgt-overlay
+            v-if="showOverlay"
+            ref="vgtOverlayRef"
+            :rect="currentStepRect"
+            :allow-interaction="allowInteraction"
+            v-bind="{ ...currentStep?.overlay }"
+            @overlay-click="onOverlayClick"
+          />
+        </transition>
+      </template>
       <template
         v-if="
-          showPopover &&
-          (currentStep?.title ||
-            currentStep?.content ||
-            (currentStep?.slot && $slots[currentStep.slot]) ||
-            $slots.content)
+          currentStep?.title ||
+          currentStep?.content ||
+          (currentStep?.slot && $slots[currentStep.slot]) ||
+          $slots.content
         "
       >
-        <transition name="popover-appear" appear>
+        <transition name="popover-fade">
           <vgt-popover
+            v-if="showPopover"
             :rect="currentStepRect"
             :arrow="arrow"
             :offset="offset"
@@ -139,6 +145,8 @@ export default defineComponent({
     const {
       steps,
       allowKeyboardEvent,
+      allowEscClose,
+      allowOverlayClose,
       useOverlay,
       padding,
       name: tourName,
@@ -153,6 +161,7 @@ export default defineComponent({
 
     const active = ref(false)
     const showPopover = ref(false)
+    const showOverlay = ref(false)
 
     const currentStepIndex = ref(-1)
     const prevStepIndex = ref(-1)
@@ -192,10 +201,6 @@ export default defineComponent({
             ? `${stepObj.popover?.id || uid}-desc`
             : undefined,
         },
-        // overlay options
-        overlay: {
-          ...stepObj.overlay,
-        },
         _step: stepObj,
       }
     })
@@ -214,7 +219,7 @@ export default defineComponent({
 
     const onNext = async () => {
       if (!active.value) return
-      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
+      if (useOverlay.value && vgtOverlayRef.value?.isTimeout) return
       const index = currentStepIndex.value + 1
       if (index > steps.value.length - 1) return
 
@@ -231,7 +236,7 @@ export default defineComponent({
 
     const onPrev = async () => {
       if (!active.value) return
-      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
+      if (useOverlay.value && vgtOverlayRef.value?.isTimeout) return
       const index = currentStepIndex.value - 1
       if (index < 0) return
 
@@ -248,14 +253,14 @@ export default defineComponent({
 
     const onEnd = () => {
       if (!active.value) return
-      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
+      if (useOverlay.value && vgtOverlayRef.value?.isTimeout) return
       const index = -1
       handleStepIndexChange(index)
     }
 
     const onMove = (index = 0) => {
       if (!active.value) return
-      if (useOverlay.value && !vgtOverlayRef.value?.isHighlighted) return
+      if (useOverlay.value && vgtOverlayRef.value?.isTimeout) return
       handleStepIndexChange(index)
     }
 
@@ -289,11 +294,6 @@ export default defineComponent({
       lastFocused = document.activeElement
 
       if (useOverlay.value) {
-        const startTour = async () => {
-          await vgtOverlayRef.value?.start()
-          done()
-        }
-
         const moveTour = async () => {
           const newRect = el
             ? getBoundingWithPadding(
@@ -302,40 +302,45 @@ export default defineComponent({
               )
             : getWindowCenterRect()
           await vgtOverlayRef.value?.highlight(newRect)
-          done()
+          afterMove()
         }
 
-        move ? moveTour() : startTour()
+        move ? moveTour() : (showOverlay.value = true)
       } else {
         nextTick(() => {
-          done()
+          afterMove()
         })
-      }
-
-      function done() {
-        if (el) {
-          const inView = isInView(el.getBoundingClientRect())
-          if (!inView) {
-            el.scrollIntoView({ block: 'center' })
-          }
-          addHighlight(el)
-        }
-
-        showPopover.value = true
-
-        nextTick(() => {
-          enableTrap()
-        })
-        emit(!move ? 'after-start' : 'after-move')
       }
     }
 
-    const handleEndTour = async () => {
+    const afterMove = () => {
+      const el = currentStepEl.value
+      const move = !!(prevStepIndex.value != -1)
+      if (el) {
+        const inView = isInView(el.getBoundingClientRect())
+        if (!inView) {
+          el.scrollIntoView({ block: 'center' })
+        }
+        addHighlight(el)
+      }
+
+      showPopover.value = true
+
+      nextTick(() => {
+        enableTrap()
+      })
+      emit(!move ? 'after-start' : 'after-move')
+    }
+
+    const handleEndTour = () => {
       showPopover.value = false
       removeHighlight()
       if (useOverlay.value) {
-        await vgtOverlayRef.value?.close()
+        showOverlay.value = false
       }
+    }
+
+    const afterLeave = () => {
       ;(lastFocused as HTMLElement).focus({
         preventScroll: true,
       })
@@ -345,17 +350,17 @@ export default defineComponent({
 
     const onKeyUp = (event: KeyboardEvent) => {
       if (!allowKeyboardEvent.value) return
-      switch (event.key) {
-        case 'ArrowLeft':
-          onPrev()
-          break
-        case 'ArrowRight':
-          onNext()
-          break
+      if (event.key === 'ArrowLeft') {
+        onPrev()
+      } else if (event.key === 'ArrowRight') {
+        onNext()
+      } else if (event.key === 'Escape' && allowEscClose.value) {
+        onEnd()
       }
     }
 
     const onOverlayClick = () => {
+      if (!allowOverlayClose.value) return
       onEnd()
     }
 
@@ -384,6 +389,7 @@ export default defineComponent({
       vgtRef,
       vgtOverlayRef,
       showPopover,
+      showOverlay,
       currentStepIndex,
       currentStepRect,
       currentStep,
@@ -396,6 +402,8 @@ export default defineComponent({
       move: onMove,
       onOverlayClick,
       onCloseClick,
+      afterMove,
+      afterLeave,
     }
   },
 })
@@ -537,10 +545,19 @@ function useHightlight() {
   color: #5b6474;
 }
 
-.popover-appear-enter-active {
-  transition: opacity 0.2s ease-out;
+.popover-fade-enter-active {
+  transition: opacity 200ms ease-out;
 }
-.popover-appear-enter-from {
+.popover-fade-enter-from {
+  opacity: 0;
+}
+
+.overlay-fade-enter-active,
+.overlay-fade-leave-active {
+  transition: opacity 300ms ease-out;
+}
+.overlay-fade-enter-from,
+.overlay-fade-leave-to {
   opacity: 0;
 }
 </style>
