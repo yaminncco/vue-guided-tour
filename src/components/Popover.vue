@@ -301,11 +301,9 @@ export default defineComponent({
     watch(
       () => rect.value,
       () => {
-        nextTick(() => {
-          initPopover()
-        })
+        initPopover()
       },
-      { immediate: true }
+      { deep: true, immediate: true }
     )
 
     useObserver(popoverRef, initPopover)

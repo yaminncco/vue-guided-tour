@@ -3,15 +3,6 @@ import useEvent from './useEvent'
 import useObserver from './useObserver'
 import { rafThrottle } from './utils'
 
-export type Rect = {
-  top: number
-  left: number
-  width: number
-  height: number
-  bottom: number
-  right: number
-}
-
 export default function useRect<Target extends HTMLElement | undefined | null>(
   target?: Ref<Target> | Target
 ) {

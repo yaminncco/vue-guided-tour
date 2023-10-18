@@ -63,6 +63,13 @@ export interface Rect {
   left: number
   width: number
   height: number
+}
+
+export interface BoundingRect {
+  top: number
+  left: number
+  width: number
+  height: number
   bottom: number
   right: number
 }

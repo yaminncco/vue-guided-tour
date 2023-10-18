@@ -29,7 +29,7 @@ import {
 } from 'vue'
 import { vueGuidedOverlayProps, position } from '../props'
 import { useEvent, rafThrottle, getWindowCenterRect } from '../use'
-import { Rect } from '../types'
+import { Rect, BoundingRect } from '../types'
 
 export default defineComponent({
   name: 'VueGuidedOverlay',
@@ -38,15 +38,15 @@ export default defineComponent({
     ...vueGuidedOverlayProps,
   },
   expose: ['highlight', 'isTimeout'],
-  emits: ['overlay-click'],
+  emits: ['overlay-click', 'update:rect'],
   setup(props, { emit }) {
     const { rect, allowInteraction } = toRefs(props)
     const timeout = ref(false)
     const transition = ref(false)
 
     const defaultRect = getWindowCenterRect()
-    const currentRect: Rect = reactive({ ...defaultRect })
-    const prevRect: Rect = reactive({ ...defaultRect })
+    const currentRect = reactive({ ...defaultRect })
+    const prevRect = reactive({ ...defaultRect })
 
     const overlayWrapper = reactive({
       width: 0,
@@ -151,7 +151,7 @@ export default defineComponent({
     })
 
     const updateRect = (
-      rect: Rect,
+      rect: BoundingRect,
       { top = 0, left = 0, width = 0, height = 0 }
     ) => {
       rect.top = top
@@ -195,7 +195,7 @@ export default defineComponent({
       left,
       right,
       bottom,
-    }: Rect) => {
+    }: BoundingRect) => {
       const w = overlayWrapper.width
       const h = overlayWrapper.height
       const size = 200
@@ -262,7 +262,7 @@ export default defineComponent({
       }
     }
 
-    const getOverlayCenterTransform = (rect: Rect) => {
+    const getOverlayCenterTransform = (rect: BoundingRect) => {
       return getOverlaysTransform(rect).center
     }
 
@@ -348,6 +348,7 @@ export default defineComponent({
           updateRect(currentRect, newRect)
         })
         animate().then(() => {
+          emit('update:rect', currentRect)
           resolve('highlight')
         })
       })
@@ -360,11 +361,12 @@ export default defineComponent({
     }
 
     watch(
-      rect,
+      () => rect.value,
       () => {
         onUpdate()
       },
       {
+        deep: true,
         immediate: true,
       }
     )

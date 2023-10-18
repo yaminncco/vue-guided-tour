@@ -1,6 +1,6 @@
-import { Rect, Position } from '../types'
+import { BoundingRect, Position } from '../types'
 
-export const getBoundingWithPadding = (rect: Rect, padding = 0) => {
+export const getBoundingWithPadding = (rect: BoundingRect, padding = 0) => {
   return {
     top: rect.top - padding,
     right: rect.right + padding,
@@ -16,7 +16,7 @@ export const isInView = ({
   left,
   bottom,
   right,
-}: Omit<Rect, 'width' | 'height'>) => {
+}: Omit<BoundingRect, 'width' | 'height'>) => {
   const { innerWidth: w, innerHeight: h } = window
   return top >= 0 && left >= 0 && right <= w && bottom <= h
 }
@@ -26,7 +26,7 @@ export const isOutView = ({
   left,
   bottom,
   right,
-}: Omit<Rect, 'width' | 'height'>) => {
+}: Omit<BoundingRect, 'width' | 'height'>) => {
   const { innerWidth: w, innerHeight: h } = window
   return {
     top: top < 0,
