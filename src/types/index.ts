@@ -17,12 +17,12 @@ export interface TourOptions {
   pagination?: boolean
   closeBtn?: boolean
   allowKeyboardEvent?: boolean
+  allowOverlayClose?: boolean
+  allowEscClose?: boolean
   name?: string
 }
 
 export interface OverlayOptions {
-  allowOverlayClose?: boolean
-  allowEscClose?: boolean
   allowInteraction?: boolean
 }
 
@@ -49,11 +49,11 @@ export interface Step {
 }
 
 export interface TourApi {
-  start?: (index?: number) => void
-  next?: () => void
-  prev?: () => void
-  end?: () => void
-  move?: (index?: number) => void
+  start: (index?: number) => void
+  next: () => void
+  prev: () => void
+  end: () => void
+  move: (index?: number) => void
 }
 
 export type Vgt = TourApi & Partial<Record<string, TourApi>>

@@ -3,14 +3,16 @@
     <div class="demo">
       <h1 class="demo-title">Vue Guided Tour</h1>
       <p>a vue.js 3 component to guide your visitors</p>
-      <a href="#" class="demo-btn" @click.prevent="start"> Start the tour </a>
+      <button class="demo-btn" @click="start">Start the tour</button>
     </div>
     <div class="demo-grid">
       <div
         v-for="(step, index) in steps"
         :key="index"
         :class="`step step-${index + 1}`"
-      />
+      >
+        {{ index }}
+      </div>
     </div>
   </div>
   <vue-guided-tour
@@ -58,6 +60,9 @@ export default defineComponent({
           placement: 'start',
           position: 'right',
           id: 'hello-world',
+        },
+        overlay: {
+          allowInteraction: false,
         },
       },
       {
@@ -118,7 +123,7 @@ export default defineComponent({
   },
   methods: {
     start() {
-      this.$vgt.start?.(0)
+      this.$vgt.start(0)
     },
     onAfterStart() {
       // call after the tour start
@@ -168,6 +173,7 @@ body {
   border-radius: 4px;
   font-size: 18px;
   margin-top: 20px;
+  cursor: pointer;
 }
 .demo-grid {
   display: grid;

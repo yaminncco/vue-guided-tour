@@ -201,6 +201,10 @@ export default defineComponent({
             ? `${stepObj.popover?.id || uid}-desc`
             : undefined,
         },
+        // overlay options
+        overlay: {
+          ...stepObj.overlay,
+        },
         _step: stepObj,
       }
     })
