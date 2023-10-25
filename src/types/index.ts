@@ -46,6 +46,7 @@ export interface Step {
   overlay?: OverlayOptions
   onBeforeNext?: () => any
   onBeforePrev?: () => any
+  onBeforeExit?: () => any
 }
 
 export interface TourApi {

@@ -255,9 +255,18 @@ export default defineComponent({
       handleStepIndexChange(index)
     }
 
-    const onExit = () => {
+    const onExit = async () => {
       if (!active.value) return
       if (useOverlay.value && vgtOverlayRef.value?.isTimeout) return
+
+      const onBeforeExit = currentStep.value?.onBeforeExit
+      if (onBeforeExit) {
+        const continueTour = await onBeforeExit()
+        if (continueTour === false) {
+          return
+        }
+      }
+
       const index = -1
       handleStepIndexChange(index)
     }
