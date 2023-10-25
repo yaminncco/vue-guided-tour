@@ -6,7 +6,7 @@
     v-bind="$attrs"
   >
     <div
-      v-if="rect && arrow"
+      v-if="isArrowEnabled"
       :class="`vgp__arrow vgp__arrow--${currentPosition}`"
       :style="arrowStyle"
     />
@@ -25,7 +25,6 @@ import {
   defineComponent,
   toRefs,
   ExtractPropTypes,
-  Ref,
   StyleValue,
   ComputedRef,
 } from 'vue'
@@ -99,7 +98,7 @@ export default defineComponent({
       return isPositionInside.value ? reverse : currentPosition.value
     })
 
-    const { arrowStyle, arrowRect } = useArrow(
+    const { arrowStyle, arrowRect, isArrowEnabled } = useArrow(
       props,
       arrowPosition,
       popoverRect,
@@ -107,7 +106,8 @@ export default defineComponent({
     )
 
     const updatePopover = () => {
-      if (!popoverRef.value) return
+      if (!popoverRef.value || (!popoverRect.width && !popoverRect.height))
+        return
       if (!rect.value) {
         initPositionCoord()
         updatePopoverRect()
@@ -132,9 +132,8 @@ export default defineComponent({
     }
 
     const initPositionCoord = () => {
-      if (!popoverRef.value) return
-      const { height: popoverHeight, width: popoverWidth } =
-        popoverRef.value.getBoundingClientRect()
+      const popoverWidth = popoverRect.width
+      const popoverHeight = popoverRect.height
 
       const { innerWidth: w, innerHeight: h } = window
 
@@ -348,6 +347,7 @@ export default defineComponent({
       currentPosition,
       popoverStyle,
       arrowStyle,
+      isArrowEnabled,
     }
   },
 })
@@ -356,7 +356,7 @@ function useArrow(
   props: ExtractPropTypes<typeof vueGuidedPopoverProps>,
   position: ComputedRef<Position>,
   popoverRect: BoundingRect,
-  rect: Ref<Rect>
+  rect: ComputedRef<Rect>
 ) {
   const size = 14
   const height = (Math.sqrt(2) * size) / 2
@@ -364,9 +364,9 @@ function useArrow(
 
   const arrowRect = computed(() => {
     return {
-      size: props.arrow ? size : 0,
-      height: props.arrow ? height : 0,
-      offset: props.arrow ? offset : 0,
+      size: isArrowEnabled.value ? size : 0,
+      height: isArrowEnabled.value ? height : 0,
+      offset: isArrowEnabled.value ? offset : 0,
     }
   })
 
@@ -381,6 +381,10 @@ function useArrow(
       [position.value]: '100%',
       transform: `translateX(${tx}px) translateY(${ty}px) rotate(45deg)`,
     }
+  })
+
+  const isArrowEnabled = computed(() => {
+    return props.arrow && props.rect && popoverRect.width && popoverRect.height
   })
 
   const getArrowPositionCoord = () => {
@@ -472,6 +476,7 @@ function useArrow(
   return {
     arrowStyle,
     arrowRect,
+    isArrowEnabled,
   }
 }
 </script>
