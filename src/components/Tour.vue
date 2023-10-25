@@ -85,10 +85,10 @@
                   </button>
                   <button
                     v-if="isLastStep"
-                    class="vgt__btn vgt__btn--primary vgt__end-btn"
-                    @click="end"
+                    class="vgt__btn vgt__btn--primary vgt__exit-btn"
+                    @click="exit"
                   >
-                    End
+                    Done
                   </button>
                   <button
                     v-else
@@ -140,7 +140,7 @@ export default defineComponent({
   props: {
     ...vueGuidedTourProps,
   },
-  emits: ['update:step-index', 'after-start', 'after-end', 'after-move'],
+  emits: ['update:step-index', 'after-start', 'after-exit', 'after-move'],
   setup(props, { emit }) {
     const {
       steps,
@@ -255,7 +255,7 @@ export default defineComponent({
       handleStepIndexChange(index)
     }
 
-    const onEnd = () => {
+    const onExit = () => {
       if (!active.value) return
       if (useOverlay.value && vgtOverlayRef.value?.isTimeout) return
       const index = -1
@@ -283,7 +283,7 @@ export default defineComponent({
       if (index === -1) {
         prevEl.value = null
         currentStepEl.value = null
-        handleEndTour()
+        handleExitTour()
       } else {
         prevEl.value = currentStepEl.value
         currentStepEl.value = el as HTMLElement
@@ -336,7 +336,7 @@ export default defineComponent({
       emit(!move ? 'after-start' : 'after-move')
     }
 
-    const handleEndTour = () => {
+    const handleExitTour = () => {
       showPopover.value = false
       removeHighlight()
       if (useOverlay.value) {
@@ -349,7 +349,7 @@ export default defineComponent({
         preventScroll: true,
       })
       active.value = false
-      emit('after-end')
+      emit('after-exit')
     }
 
     const onKeyUp = (event: KeyboardEvent) => {
@@ -359,17 +359,17 @@ export default defineComponent({
       } else if (event.key === 'ArrowRight') {
         onNext()
       } else if (event.key === 'Escape' && allowEscClose.value) {
-        onEnd()
+        onExit()
       }
     }
 
     const onOverlayClick = () => {
       if (!allowOverlayClose.value) return
-      onEnd()
+      onExit()
     }
 
     const onCloseClick = () => {
-      onEnd()
+      onExit()
     }
 
     onMounted(() => {
@@ -377,7 +377,7 @@ export default defineComponent({
         start: onStart,
         next: onNext,
         prev: onPrev,
-        end: onEnd,
+        exit: onExit,
         move: onMove,
       }
       if (tourName.value) {
@@ -402,7 +402,7 @@ export default defineComponent({
       start: onStart,
       next: onNext,
       prev: onPrev,
-      end: onEnd,
+      exit: onExit,
       move: onMove,
       onOverlayClick,
       onCloseClick,
@@ -524,7 +524,7 @@ function useHightlight() {
 }
 /*
 .vgt__next-btn {}
-.vgt__end-btn {}
+.vgt__exit-btn {}
 */
 
 .vgt__close-btn {

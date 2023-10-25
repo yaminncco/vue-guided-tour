@@ -52,7 +52,7 @@ export interface TourApi {
   start: (index?: number) => void
   next: () => void
   prev: () => void
-  end: () => void
+  exit: () => void
   move: (index?: number) => void
 }
 
