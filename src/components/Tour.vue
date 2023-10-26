@@ -81,7 +81,7 @@
                     class="vgt__btn vgt__btn--secondary vgt__prev-btn"
                     @click="prev"
                   >
-                    Prev
+                    Back
                   </button>
                   <button
                     v-if="isLastStep"
