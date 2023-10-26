@@ -134,6 +134,9 @@ Popover width.
     id: 'hello-world', // Used for aria-labelledby & aria-describedby
     // 'aria-label': 'Hello world', // When title is undefined
   },
+  overlay: {
+    allowInteraction: true,
+  },
   onBeforeNext: () => {
     // perform actions
     // return false to prevent the tour from moving to the next step
@@ -141,6 +144,10 @@ Popover width.
   onBeforePrev: () => {
     // perform actions
     // return false to prevent the tour from moving to the previous step
+  }
+  onBeforeExit: () => {
+    // perform actions
+    // return false to prevent the tour from exiting
   }
 }
 ```
@@ -163,7 +170,7 @@ Move on to the next step.
 
 Move on to the prev step.
 
-#### `$vgt.end()`
+#### `$vgt.exit()`
 
 End the tour.
 
@@ -175,15 +182,15 @@ Move to a specific step.
 
 #### `@after-start`
 
-Emits after the tour start.
+Emit after the tour start.
 
-#### `@after-end`
+#### `@after-exit`
 
-Emits after the tour end.
+Emit after the tour end.
 
 #### `@after-move`
 
-Emits after the tour move to the next or prev step.
+Emit after the tour move to the next or prev step.
 
 ## Slots
 
@@ -192,17 +199,17 @@ The available slots: `#[dynamicSlotName]`, `#content`, `#close`, `#nav`
 ```html
 <vue-guided-tour>
   <template #[dynamicSlotName]="{ stepIndex, step }">
-    <div>step {{ stepIndex }}, {{ step }}</div>
+    <div>{{ stepIndex }}, {{ step }}</div>
   </template>
-  <template #content="{ stepIndex }">
-    <div>step {{ stepIndex }}</div>
+  <template #content="{ stepIndex, step }">
+    <div>{{ stepIndex }}, {{ step }}</div>
   </template>
   <template #close>
-    <button @click="$vgt.end">x</button>
+    <button @click="$vgt.exit">x</button>
   </template>
   <template #nav="{ isFirstStep, isLastStep }">
-    <button v-if="!isFirstStep" @click="$vgt.prev">Prev</button>
-    <button v-if="isLastStep" @click="$vgt.end">End</button>
+    <button v-if="!isFirstStep" @click="$vgt.prev">Back</button>
+    <button v-if="isLastStep" @click="$vgt.exit">Done</button>
     <button v-else @click="$vgt.next">Next</button>
   </template>
 </vue-guided-tour>

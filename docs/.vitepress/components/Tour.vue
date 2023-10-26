@@ -91,6 +91,10 @@ const steps = ref<VueGuidedTourProps['steps']>([
 </script>
 
 <style>
+html.dark .tour {
+  --vgt-overlay-opacity: 0.8;
+}
+
 .tour .vue-guided-popover {
   color: var(--vp-c-text-1);
 }

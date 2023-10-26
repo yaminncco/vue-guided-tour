@@ -34,7 +34,7 @@
       <button @click="$vgt.exit">x</button>
     </template>
     <template #nav="{ isFirstStep, isLastStep }">
-      <button v-if="!isFirstStep" @click="$vgt.prev">Prev</button>
+      <button v-if="!isFirstStep" @click="$vgt.prev">Back</button>
       <button v-if="isLastStep" @click="$vgt.exit">Done</button>
       <button v-else @click="$vgt.next">Next</button>
     </template>
