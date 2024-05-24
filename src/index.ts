@@ -7,7 +7,7 @@ import { Vgt } from './types'
 
 const vgtPlugin: Plugin = {
   install(app) {
-    const $vgt = {}
+    const $vgt = {} as Vgt
     app.config.globalProperties.$vgt = $vgt
     app.provide(vgtInjectionKey, $vgt)
     app.component('VueGuidedTour', VueGuidedTour)

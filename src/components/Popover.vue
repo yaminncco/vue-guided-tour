@@ -74,16 +74,12 @@ export default defineComponent({
     })
 
     const currentPosition = computed(() => {
-      const current = currentPosition.value as typeof props.position
       if (!rect.value || !props.autoAdjust) {
         return props.position
       }
       if (checkAvailableSpace(props.position)) {
         return props.position
       } else {
-        if (checkAvailableSpace(current)) {
-          return current
-        }
         const bestPosition = getBestPosition()
         if (isPositionInside.value) {
           return props.position
