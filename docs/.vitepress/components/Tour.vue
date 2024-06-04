@@ -4,7 +4,7 @@
       <template #step-first>
         <div style="text-align: center">
           <img
-            src="https://placekitten.com/g/400/400"
+            src="https://loremflickr.com/200/200/cat"
             style="margin: 0 auto 24px; max-width: 200px; border-radius: 50%"
           />
           <h3 class="vgt__title">Welcome to VueGuidedTour</h3>
@@ -13,7 +13,7 @@
       <template #step-last>
         <div style="text-align: center">
           <img
-            src="https://placekitten.com/g/400/400"
+            src="https://loremflickr.com/200/200/cat"
             style="margin: 0 auto 24px; max-width: 200px; border-radius: 50%"
           />
           <h3 class="vgt__title">That's the end of our tour!</h3>
